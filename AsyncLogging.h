@@ -10,8 +10,8 @@
  *
  *	int main() {
  *		
- *		setGlobalLogName("xxx");
- *		startGlobalLog();
+ *		setGlobalLoggerName("xxx");
+ *		startGlobalLogging();
  *		[setGlobalLoggerFlushInterval(x);]
  *		[setGlobalLoggerHighWaterMask(x);]
  *		.
@@ -20,7 +20,7 @@
  *
  *		.
  *
- *		stopGlobalLog();
+ *		stopGlobalLogging();
  *
  *	}
  *

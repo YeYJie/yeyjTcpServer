@@ -2,26 +2,33 @@
 #include "AsyncLogging.h"
 #include <strings.h> /* bzero */
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <cassert>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 using namespace yeyj;
 
 Acceptor::Acceptor(const int & port) :
-	_port(port),
-	_running(false)
+	_port(port)
 {
 	/* create a listen socket on the given port */
 	_listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	assert(_listenfd >= 0);	
 
-	InetSockAddr	serverAddr;
-	bzero((void *)serverAddr, sizeof(serverAddr));	
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serverAddr.sin_port = htons((unsigned short)_port);
+	int shit = 1;
+	setsockopt(_listenfd, SOL_SOCKET, SO_REUSEADDR,
+			   &shit, sizeof(int));
+
+	InetSockAddr serverAddr(AF_INET, INADDR_ANY, _port);
 	
-	assert(bind(_listenfd, 
-				(struct sockaddr *)&serverAddr, 
-				sizeof(serverAddr)) == 0);
+	// assert(bind(_listenfd,
+	// 			(struct sockaddr *)&serverAddr,
+	// 			sizeof(serverAddr)) == 0);
+	if((bind(_listenfd,
+			 (struct sockaddr *)&serverAddr,
+			 sizeof(serverAddr))) != 0)
+		printf("\nAcceptor::Acceptor [%s]\n\n", strerror(errno));
 	assert(listen(_listenfd, SOMAXCONN) == 0);
 
 
@@ -31,13 +38,12 @@ Acceptor::Acceptor(const int & port) :
 	
 	struct epoll_event ev;
 	ev.events = EPOLLIN;
-	ev.data.u64 = 0LL; /* what the shit ? */
 	ev.data.fd = _listenfd;
 
 	epoll_ctl(_epollfd, EPOLL_CTL_ADD, _listenfd, &ev);
 }
 
-void setConnectionCallback(const ConnectionCallback & cb)
+void Acceptor::setConnectionCallback(const ConnectionCallback & cb)
 {
 	_connectionCallback = cb;
 }
@@ -59,14 +65,17 @@ void Acceptor::start()
 		assert(nfds == 1);
 		assert(events[0].data.fd == _listenfd);
 
-		InetSockAddr clientAddr;		
+		sockaddr_in clientAddr;
+		unsigned int clientAddrLen = sizeof(clientAddr);
 		int connectSock = accept(_listenfd, 
 								 (struct sockaddr *)&clientAddr,
-								 sizeof(clientAddr));
+								 &clientAddrLen);
 		assert(connectSock >= 0); /* assert or log ? */
 		
 		/* here we already get client addr info : */
 		/* 		connectSock and clientAddr 		  */
-		_connectionCallback(connectSock, clientAddr);
+
+		// printf("Acceptor::start\n");
+		_connectionCallback(connectSock, InetSockAddr(clientAddr));
 	}
 }

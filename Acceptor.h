@@ -1,6 +1,10 @@
 #ifndef ACCEPTOR_H_
 #define ACCEPTOR_H_
 
+#include "InetSockAddr.h"
+#include <netinet/in.h>
+#include <functional>
+
 namespace yeyj
 {
 
@@ -20,9 +24,7 @@ class Acceptor
 {
 public:
 	
-	typedef sockaddr_in 							InetSockAddr;
-	typedef std::function<void (int, const InetSockAddr &)> 
-													ConnectionCallback;
+	typedef std::function<void (int, const InetSockAddr &)> ConnectionCallback;
 
 	explicit Acceptor(const int & port);
 
