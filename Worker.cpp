@@ -10,7 +10,7 @@ Worker::Worker(const int & maxConnection) :
 	_epollfd = epoll_create(1); 
 }
 
-void Worker::work(TcpConnection * conn)
+void Worker::registerNewConnection(TcpConnection * conn)
 {
 	/*	
 	 *	we should put the new connection into a blocking queue instead of
@@ -98,8 +98,8 @@ void Worker::registerNewConnection()
 	while(!temp.empty()) {
 		TcpConnection * conn = temp.front();
 		temp.pop();
-		// printf("Worker::registerNewConnection [%x] [%d] on [%d]\n", 
-		// 		conn, conn->getfd(), _epollfd);
+		// printf("Worker[%d]::registerNewConnection [%x] [%d] on [%d]\n", 
+		// 		Thread::getTid(), conn, conn->getfd(), _epollfd);
 		epoll_ctl(_epollfd,
 				  EPOLL_CTL_ADD,
 				  conn->getfd(),

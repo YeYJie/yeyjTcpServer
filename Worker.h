@@ -23,7 +23,7 @@ public:
 	/*
 	 * 	This function would be called by the TcpServer thread
 	 * */
-	void work(TcpConnection * conn);
+	void registerNewConnection(TcpConnection * conn);
 
 private:
 	

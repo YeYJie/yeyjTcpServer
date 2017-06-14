@@ -24,6 +24,10 @@ public:
 	void start();
 	void join();
 
+	pthread_t getTid() {
+		return _tid;
+	}
+
 	string getName() {
 		return _name;
 	}

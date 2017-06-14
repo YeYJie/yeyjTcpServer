@@ -54,6 +54,7 @@ epoll_event * TcpConnection::getEpollEvent()
 	return &_epollEvent;
 }
 
+#include <cstring>
 void TcpConnection::handleRead()
 {
 	char buffer[200];
@@ -61,10 +62,19 @@ void TcpConnection::handleRead()
 	bzero(buffer, sizeof(buffer));
 	// read(_connfd, buffer, sizeof(buffer));
 	if((len = read(_connfd, buffer, sizeof(buffer)) == 0)) {
-		// printf("TcpConnection::handleRead close\n");
+		printf("TcpConnection::handleRead close\n");
 		assert(close(_connfd) == 0);
 	}
+	
+	char ok[20];
+	sprintf(ok, "HTTP/1.1 200 OK\r\n");
+	write(_connfd, ok, sizeof(ok));
 
-	printf("TcpConnection::handleRead [%d] [%d]%s\n",
-			_connfd, len, buffer);
+	// printf("TcpConnection::handleRead [%d] [%d]%s\n",
+	//         _connfd, strlen(buffer), buffer);
+	printf("TcpConnection::handleRead [%d] [%ld]",
+			_connfd, strlen(buffer));
+	for(int i = 0; i < strlen(buffer); ++i)
+		printf("%d ", buffer[i]);
+	printf("\n");
 }

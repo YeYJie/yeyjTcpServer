@@ -9,8 +9,8 @@
 #include "Acceptor.h"
 #include "AsyncLogging.h"
 #include "InetSockAddr.h"
-#include "Worker.h"
 #include "TcpConnection.h"
+#include "Worker.h"
 
 namespace yeyj
 {

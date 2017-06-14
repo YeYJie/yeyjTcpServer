@@ -38,7 +38,9 @@ void TcpServer::setMessageCallback(const MessageCallback & cb)
  * */
 Worker * TcpServer::findAWorker()
 {
-	return _threadPool[0];
+	/* round-robin... */
+	static int index = 0;
+	return _threadPool[(index++) % _threadPool.size()];
 }
 
 void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
@@ -46,14 +48,14 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 	// YEYJ_LOG("TcpServer::newConnection [%s] [%d]\n",
 	// 		 peerAddr.getIpAsChar(),
 	// 		 peerAddr.getPort());
-	// printf("TcpServer::newConnection [%s] [%d]\n",
-	// 		peerAddr.getIpAsChar(),
-	// 		peerAddr.getPort());
+	printf("TcpServer::newConnection [%s] [%d]\n",
+			peerAddr.getIpAsChar(),
+			peerAddr.getPort());
 	Worker * worker = findAWorker();
 
-	worker->work(new TcpConnection(connSock, peerAddr,
-							   _connectionCallback,
-							   _messageCallback));
+	worker->registerNewConnection(new TcpConnection(connSock, peerAddr,
+							   						_connectionCallback,
+							   						_messageCallback));
 
 	// printf("TcpServer::newConnection\n");
 }

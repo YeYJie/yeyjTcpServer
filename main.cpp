@@ -6,6 +6,6 @@ using namespace std;
 int main()
 {
 	TcpServer server(44350);
-	server.start(1);
+	server.start(3);
 	return 0;
 }
