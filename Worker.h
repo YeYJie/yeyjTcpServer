@@ -2,16 +2,17 @@
 #define _WORKER_H_
 
 #include "include.h"
-#include "InetSockAddr.h"
+// #include "InetSockAddr.h"
 #include "Thread.h"
 #include "TcpConnection.h"
 #include "Mutex.h"
-#include "TcpServer.h"
+// #include "TcpServer.h"
 
 namespace yeyj
 {
 
 class TcpServer;
+class TcpConnection;
 
 class Worker : public Thread
 {

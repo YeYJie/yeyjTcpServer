@@ -4,23 +4,20 @@
 #include "include.h"
 #include "InetSockAddr.h"
 #include "buffer.h"
+#include "TcpServer.h"
 
 namespace yeyj
 {
+
+class TcpServer;
 
 class TcpConnection
 {
 public:
 
-typedef std::function<void (TcpConnection & conn)> 	ConnectionCallback;
-typedef std::function<void (TcpConnection & conn)> 	DisconnectionCallback;
-typedef std::function<void (TcpConnection & conn)> 	MessageCallback;
-
 	explicit TcpConnection(const int & connfd,
 						   const InetSockAddr & peerAddr,
-						   ConnectionCallback connectionCallback,
-						   DisconnectionCallback disconnectionCallback,
-						   MessageCallback messageCallback,
+						   TcpServer * master,
 						   int read_buffer_init_size,
 						   int read_buffer_max_size,
 						   int write_buffer_init_size,
@@ -65,9 +62,7 @@ private:
 	InetSockAddr 				_localAdddr;
 	InetSockAddr 				_peerAddr;
 
-	ConnectionCallback 			_connectionCallback;
-	DisconnectionCallback 		_disconnectionCallback;
-	MessageCallback 			_messageCallback;
+	TcpServer * 				_master;
 
 	Buffer						_readBuffer;
 	Buffer 						_writeBuffer;
@@ -75,9 +70,7 @@ private:
 	int 						_lastActiveTime;
 };
 
-typedef std::function<void (TcpConnection & conn)> 	ConnectionCallback;
-typedef std::function<void (TcpConnection & conn)> 	DisconnectionCallback;
-typedef std::function<void (TcpConnection & conn)> 	MessageCallback;
+
 
 }
 

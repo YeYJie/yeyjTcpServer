@@ -4,9 +4,8 @@
 #include "include.h"
 #include "Acceptor.h"
 #include "AsyncLogging.h"
-#include "InetSockAddr.h"
-#include "TcpConnection.h"
 #include "Worker.h"
+// #include "TcpConnection.h"
 
 namespace yeyj
 {
@@ -23,6 +22,10 @@ namespace yeyj
 #define LOAD_BALANCE_MINCONNECTION 		2
 
 class Worker;
+class TcpConnection;
+typedef std::function<void (TcpConnection & conn)> 	ConnectionCallback;
+typedef std::function<void (TcpConnection & conn)> 	DisconnectionCallback;
+typedef std::function<void (TcpConnection & conn)> 	MessageCallback;
 
 class TcpServer
 {
@@ -41,11 +44,24 @@ public:
 
 	void stop();
 
+	// const ConnectionCallback & connectionCallback() const {
+	// 	return _connectionCallback;
+	// }
 	void setConnectionCallback(const ConnectionCallback & cb);
 
+	// const DisconnectionCallback & disconnectionCallback() const {
+	// 	return _disconnectionCallback;
+	// }
 	void setDisconnectionCallback(const DisconnectionCallback & cb);
 
+	// const MessageCallback & messageCallback() const {
+	// 	return _messageCallback;
+	// }
 	void setMessageCallback(const MessageCallback & cb);
+
+	ConnectionCallback 			connectionCallback;
+	DisconnectionCallback 		disconnectionCallback;
+	MessageCallback 			messageCallback;
 
 private:
 
@@ -67,9 +83,6 @@ private:
 
 	std::vector<Worker *> 		_threadPool;
 
-	ConnectionCallback 			_connectionCallback;
-	DisconnectionCallback 		_disconnectionCallback;
-	MessageCallback 			_messageCallback;
 
 	LoadBalanceFunc				_loadBalance;
 

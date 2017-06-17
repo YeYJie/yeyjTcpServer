@@ -3,18 +3,14 @@ using namespace yeyj;
 
 TcpConnection::TcpConnection(const int & connfd,
 							 const InetSockAddr & peerAddr,
-							 ConnectionCallback connectionCallback,
-							 DisconnectionCallback disconnectionCallback,
-							 MessageCallback messageCallback,
+							 TcpServer * master,
 							 int read_buffer_init_size,
 							 int read_buffer_max_size,
 							 int write_buffer_init_size,
 							 int write_buffer_max_size) :
 	_connfd(connfd),
 	_peerAddr(peerAddr),
-	_connectionCallback(connectionCallback),
-	_disconnectionCallback(disconnectionCallback),
-	_messageCallback(messageCallback),
+	_master(master),
 	_readBuffer(read_buffer_init_size, read_buffer_max_size),
 	_writeBuffer(write_buffer_init_size, write_buffer_max_size)
 {
@@ -93,7 +89,8 @@ epoll_event * TcpConnection::getEpollEvent()
 void TcpConnection::onConnection()
 {
 	// cout << "new tcp connection" << endl;
-	_connectionCallback(*this);
+	// _connectionCallback(*this);
+	_master->connectionCallback(*this);
 }
 
 void TcpConnection::onReadableEvent()
@@ -151,24 +148,12 @@ void TcpConnection::onWritableEvent()
 void TcpConnection::onDisconnection()
 {
 	// cout << "tcp connection close" << endl;
-	_disconnectionCallback(*this);
+	// _disconnectionCallback(*this);
+	_master->disconnectionCallback(*this);
 	assert(close(_connfd) == 0);
 }
 
 void TcpConnection::onMessage()
 {
-	_messageCallback(*this);
-	// _messageCallback();
-
-	// char ok[20];
-	// sprintf(ok, "HTTP/1.1 200 OK\r\n");
-	// write(_connfd, ok, sizeof(ok));
-
-	// printf("TcpConnection::handleRead [%d] [%ld]",
-	// 		_connfd, strlen(buffer));
-	// printf("[");
-	// for(int i = 0; i < strlen(buffer); ++i)
-	// 	printf("%c", buffer[i]);
-	// printf("]");
-	// printf("\n");
+	_master->messageCallback(*this);
 }
