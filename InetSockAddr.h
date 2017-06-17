@@ -1,10 +1,7 @@
-#ifndef INETSOCKADDR_H_
-#define INETSOCKADDR_H_
+#ifndef _INETSOCKADDR_H_
+#define _INETSOCKADDR_H_
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <string>
-#include <strings.h>
+#include "include.h"
 
 namespace yeyj
 {
@@ -12,10 +9,11 @@ namespace yeyj
 class InetSockAddr
 {
 public:
-	
+
 	InetSockAddr(const short family = AF_INET,
 						  const unsigned long addr = INADDR_ANY,
-						  const unsigned short port = 0) {
+						  const unsigned short port = 0)
+	{
 		bzero((void *)&_addr, sizeof(_addr));
 		_addr.sin_family = family;
 		_addr.sin_port = htons((unsigned short)port);
@@ -28,6 +26,10 @@ public:
 
 	int getFamily() {
 		return _addr.sin_family;
+	}
+
+	int getIP() {
+		return _addr.sin_addr.s_addr;
 	}
 
 	int getPort() {
@@ -43,7 +45,7 @@ public:
 	}
 
 private:
-	
+
 	struct sockaddr_in 		_addr;
 
 };

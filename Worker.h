@@ -1,21 +1,29 @@
-#ifndef WORKER_H_
-#define WORKER_H_
+#ifndef _WORKER_H_
+#define _WORKER_H_
 
+#include "include.h"
 #include "InetSockAddr.h"
 #include "Thread.h"
 #include "TcpConnection.h"
 #include "Mutex.h"
-#include <queue>
+#include "TcpServer.h"
 
 namespace yeyj
 {
+
+class TcpServer;
 
 class Worker : public Thread
 {
 public:
 
-	explicit Worker(const int & maxConnection);
-	
+	// explicit Worker(const int & maxConnection);
+	explicit Worker(TcpServer * master);
+
+	void setMaxConnection(const int n) {
+		_maxConnection = n;
+	}
+
 	void start();
 
 	void stop();
@@ -25,8 +33,10 @@ public:
 	 * */
 	void registerNewConnection(TcpConnection * conn);
 
+	int getConnectionNum() const { return _connectionPool.size(); }
+
 private:
-	
+
 	/*
 	 * 	use epoll_wait
 	 *	when the conn socket becomes readable, calls the responding
@@ -36,11 +46,19 @@ private:
 
 	void registerNewConnection();
 
+	void eviction();
+
+	void manageInactiveConnection();
+
 	int 							_epollfd;
 	int 							_maxConnection;
 
 	MutexLock 						_mutex;
 	std::queue<TcpConnection *> 	_incomingConnection;
+
+	std::unordered_map<int, TcpConnection*> 	_connectionPool;
+
+	TcpServer * 					_master;
 };
 
 }

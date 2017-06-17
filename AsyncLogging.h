@@ -1,6 +1,6 @@
 
 /*
- *	Usage : ( must link with 'AsyncLogging.cpp' ) 
+ *	Usage : ( must link with 'AsyncLogging.cpp' )
  *
  *	void f() {
  *		.
@@ -9,13 +9,13 @@
  *	}
  *
  *	int main() {
- *		
+ *
  *		setGlobalLoggerName("xxx");
  *		startGlobalLogging();
  *		[setGlobalLoggerFlushInterval(x);]
  *		[setGlobalLoggerHighWaterMask(x);]
  *		.
- *		
+ *
  *		f();
  *
  *		.
@@ -32,14 +32,14 @@
  *
  */
 
-#ifndef ASYNCLOGGING_H_
-#define ASYNCLOGGING_H_
+#ifndef _ASYNCLOGGING_H_
+#define _ASYNCLOGGING_H_
 
+#include "include.h"
 #include "Thread.h"
 #include "Mutex.h"
 #include "Condition.h"
-#include <string>
-#include <vector>
+
 
 namespace  yeyj
 {
@@ -53,16 +53,16 @@ public:
 
 	void append(const std::string & logline);
 
-	void start(); 
+	void start();
 
-	void stop(); 
+	void stop();
 
 	/*
 	 * flush the buffed logs to disk every 'second' seconds
 	 * */
 	void setFlushInterval(const int & second);
 
-	/* 
+	/*
 	 * when the numbers of the buffered logs exceed 'highWaterMask'
 	 * then flush then to disk
 	 * */

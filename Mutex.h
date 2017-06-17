@@ -1,7 +1,7 @@
-#ifndef MUTEX_H_
-#define MUTEX_H_
+#ifndef _MUTEX_H_
+#define _MUTEX_H_
 
-#include <pthread.h>
+#include "include.h"
 
 namespace yeyj
 {
@@ -36,11 +36,11 @@ class MutexLockGuard
 public:
 
 	explicit MutexLockGuard(MutexLock & mutex) :
-		_mutex(mutex) 
+		_mutex(mutex)
 	{
 		mutex.lock();
 	}
-	
+
 	~MutexLockGuard() {
 		_mutex.unlock();
 	}

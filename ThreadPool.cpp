@@ -1,7 +1,4 @@
 #include "ThreadPool.h"
-#include <algorithm>
-#include <cassert>
-#include <string>
 using namespace yeyj;
 
 ThreadPool::ThreadPool(const string & name) :
@@ -37,7 +34,7 @@ void ThreadPool::start(int numThreads)
 					_name + std::to_string(i))
 				);
 		_threads[i]->start();
-	} 
+	}
 	if(numThreads == 0)
 		threadInitFunc();
 }
@@ -78,7 +75,7 @@ ThreadPool::Task ThreadPool::takeATask()
 	MutexLockGuard lock(_mutex);
 	while(_running && _tasks.empty())
 		_notEmpty.wait();
-	
+
 	Task res;
 	if(_tasks.empty()) return res;
 
@@ -86,7 +83,7 @@ ThreadPool::Task ThreadPool::takeATask()
 	_tasks.pop_front();
 	--_currentTasksNum;
 	_notFull.notify();
-	
+
 	return res;
 }
 
@@ -103,5 +100,5 @@ void ThreadPool::threadInitFunc()
 		// }
 		if(t) t();
 	}
-	
+
 }

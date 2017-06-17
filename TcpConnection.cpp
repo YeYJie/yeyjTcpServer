@@ -1,8 +1,4 @@
 #include "TcpConnection.h"
-#include <strings.h>
-#include <unistd.h>
-#include <cassert>
-#include <fcntl.h>
 using namespace yeyj;
 
 TcpConnection::TcpConnection(const int & connfd,
@@ -54,27 +50,49 @@ epoll_event * TcpConnection::getEpollEvent()
 	return &_epollEvent;
 }
 
-#include <cstring>
-void TcpConnection::handleRead()
+void TcpConnection::onConnection()
 {
+	cout << "new tcp connection" << endl;
+	// _connectionCallback();
+}
+
+void TcpConnection::onData()
+{
+	// call by worker
+	// read the comming data into readbuffer
 	char buffer[200];
-	int len;
+	int len = -1;
 	bzero(buffer, sizeof(buffer));
-	// read(_connfd, buffer, sizeof(buffer));
-	if((len = read(_connfd, buffer, sizeof(buffer)) == 0)) {
-		printf("TcpConnection::handleRead close\n");
-		assert(close(_connfd) == 0);
-	}
-	
+	len = read(_connfd, buffer, sizeof(buffer));
+
+	cout << "ondata [" << len << "]" << endl;
+
+	if(len <= 0)
+		onDisconnection();
+	else
+		onMessage(buffer);
+}
+
+void TcpConnection::onDisconnection()
+{
+	// _disconnectionCallback();
+	cout << "tcp connection close" << endl;
+	assert(close(_connfd) == 0);
+}
+
+void TcpConnection::onMessage(char * buffer)
+{
+	// _messageCallback();
+
 	char ok[20];
 	sprintf(ok, "HTTP/1.1 200 OK\r\n");
 	write(_connfd, ok, sizeof(ok));
 
-	// printf("TcpConnection::handleRead [%d] [%d]%s\n",
-	//         _connfd, strlen(buffer), buffer);
 	printf("TcpConnection::handleRead [%d] [%ld]",
 			_connfd, strlen(buffer));
+	printf("[");
 	for(int i = 0; i < strlen(buffer); ++i)
-		printf("%d ", buffer[i]);
+		printf("%c", buffer[i]);
+	printf("]");
 	printf("\n");
 }

@@ -1,15 +1,10 @@
-#ifndef THREADPOOL_H_
-#define THREADPOOL_H_
+#ifndef _THREADPOOL_H_
+#define _THREADPOOL_H_
 
-#include <functional>
-#include <string>
-#include <vector>
-#include <deque>
+#include "include.h"
 #include "Thread.h"
 #include "Mutex.h"
 #include "Condition.h"
-
-using std::string;
 
 namespace yeyj
 {
@@ -17,7 +12,7 @@ namespace yeyj
 class ThreadPool
 {
 public:
-	
+
 	typedef std::function<void ()> Task;
 
 	explicit ThreadPool(const string & name = string("ThreadPool"));
@@ -38,12 +33,12 @@ public:
 
 	void threadInitFunc();
 private:
-	
+
 
 	Task takeATask();
 
 private:
-	
+
 	string 					_name;
 
 	bool 					_running;
@@ -54,7 +49,7 @@ private:
 
 	int 					_maxTasksNum;
 	int 					_currentTasksNum;
-	
+
 	std::vector<Thread *> 	_threads;
 	std::deque<Task> 		_tasks;
 

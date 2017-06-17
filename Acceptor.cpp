@@ -1,12 +1,5 @@
 #include "Acceptor.h"
 #include "AsyncLogging.h"
-#include <strings.h> /* bzero */
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <cassert>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
 using namespace yeyj;
 
 Acceptor::Acceptor(const int & port) :
@@ -14,14 +7,14 @@ Acceptor::Acceptor(const int & port) :
 {
 	/* create a listen socket on the given port */
 	_listenfd = socket(AF_INET, SOCK_STREAM, 0);
-	assert(_listenfd >= 0);	
+	assert(_listenfd >= 0);
 
 	int shit = 1;
 	setsockopt(_listenfd, SOL_SOCKET, SO_REUSEADDR,
 			   &shit, sizeof(int));
 
 	InetSockAddr serverAddr(AF_INET, INADDR_ANY, _port);
-	
+
 	// assert(bind(_listenfd,
 	// 			(struct sockaddr *)&serverAddr,
 	// 			sizeof(serverAddr)) == 0);
@@ -35,7 +28,7 @@ Acceptor::Acceptor(const int & port) :
 	/* create epoll fd */
 	_epollfd = epoll_create(1);
 	assert(_epollfd >= 0);
-	
+
 	struct epoll_event ev;
 	ev.events = EPOLLIN;
 	ev.data.fd = _listenfd;
@@ -55,23 +48,26 @@ Acceptor::~Acceptor()
 
 void Acceptor::start()
 {
-	/* should only be ran in the TcpServer main thread */ 
+	cout << "acceptor start..." << endl;
+	/* should only be ran in the TcpServer main thread */
 	/* epoll wait and accept */
 	struct epoll_event events[1];
 	while(true) {
-		int nfds = epoll_wait(_epollfd, events, 1, -1);	
-		
+		int nfds = epoll_wait(_epollfd, events, 1, -1);
+
 		/* once epoll_wait return, nfds should be 1 */
 		assert(nfds == 1);
 		assert(events[0].data.fd == _listenfd);
 
 		sockaddr_in clientAddr;
 		unsigned int clientAddrLen = sizeof(clientAddr);
-		int connectSock = accept(_listenfd, 
+		int connectSock = accept(_listenfd,
 								 (struct sockaddr *)&clientAddr,
 								 &clientAddrLen);
 		assert(connectSock >= 0); /* assert or log ? */
-		
+
+		cout << "accept" << connectSock << endl;
+
 		/* here we already get client addr info : */
 		/* 		connectSock and clientAddr 		  */
 

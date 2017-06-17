@@ -1,9 +1,7 @@
-#ifndef THREAD_H_
-#define THREAD_H_
+#ifndef _THREAD_H_
+#define _THREAD_H_
 
-#include <functional>
-#include <pthread.h>
-#include <string>
+#include "include.h"
 
 using std::string;
 
@@ -18,7 +16,7 @@ public:
 
 	explicit Thread(const ThreadFunc & theadfunc,
 						const string & name = string());
-	
+
 	~Thread();
 
 	void start();
