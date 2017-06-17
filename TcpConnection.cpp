@@ -4,11 +4,19 @@ using namespace yeyj;
 TcpConnection::TcpConnection(const int & connfd,
 							 const InetSockAddr & peerAddr,
 							 ConnectionCallback connectionCallback,
-							 MessageCallback messageCallback) :
+							 DisconnectionCallback disconnectionCallback,
+							 MessageCallback messageCallback,
+							 int read_buffer_init_size,
+							 int read_buffer_max_size,
+							 int write_buffer_init_size,
+							 int write_buffer_max_size) :
 	_connfd(connfd),
 	_peerAddr(peerAddr),
 	_connectionCallback(connectionCallback),
-	_messageCallback(messageCallback)
+	_disconnectionCallback(disconnectionCallback),
+	_messageCallback(messageCallback),
+	_readBuffer(read_buffer_init_size, read_buffer_max_size),
+	_writeBuffer(write_buffer_init_size, write_buffer_max_size)
 {
 	/*	set the connection socket as non-blocking socket
 	 * */
@@ -21,7 +29,7 @@ TcpConnection::TcpConnection(const int & connfd,
 			   &shit, sizeof(int));
 
 	_epollEvent.events = 0;
-	_epollEvent.events |= EPOLLIN;
+	_epollEvent.events |= EPOLLIN | EPOLLOUT;
 	_epollEvent.data.ptr = this;
 	// printf("TcpConnection::constructor\n");
 }
@@ -31,13 +39,45 @@ TcpConnection::~TcpConnection()
 
 }
 
-void TcpConnection::send()
+void TcpConnection::send(const std::string & str)
 {
-
+	if(_writeBuffer.getMaxSpace() < str.size()) {
+		cout << "TcpConnection::send : str is too long";
+	}
+	_writeBuffer.write(str);
 }
 
-void TcpConnection::receive()
+void TcpConnection::send(const char * str)
 {
+	send(str, strlen(str));
+}
+
+void TcpConnection::send(const char * str, int size)
+{
+	if(_writeBuffer.getMaxSpace() < size) {
+		cout << "TcpConnection::send : str is too long";
+	}
+	_writeBuffer.write(str, size);
+}
+
+std::string TcpConnection::receiveAsString()
+{
+	return _readBuffer.readAsString();
+}
+
+std::string TcpConnection::receiveAsString(int length)
+{
+	return _readBuffer.readAsString(length);
+}
+
+int TcpConnection::receive(char * dst)
+{
+	return _readBuffer.read(dst);
+}
+
+int TcpConnection::receive(char * dst, int length)
+{
+	return _readBuffer.read(dst, length);
 }
 
 int TcpConnection::getfd()
@@ -52,47 +92,83 @@ epoll_event * TcpConnection::getEpollEvent()
 
 void TcpConnection::onConnection()
 {
-	cout << "new tcp connection" << endl;
-	// _connectionCallback();
+	// cout << "new tcp connection" << endl;
+	_connectionCallback(*this);
 }
 
-void TcpConnection::onData()
+void TcpConnection::onReadableEvent()
 {
-	// call by worker
-	// read the comming data into readbuffer
-	char buffer[200];
-	int len = -1;
-	bzero(buffer, sizeof(buffer));
-	len = read(_connfd, buffer, sizeof(buffer));
+	_lastActiveTime = getTimeInSecond();
 
-	cout << "ondata [" << len << "]" << endl;
+	int space = _readBuffer.getMaxSpace();
+	if(space <= 0) {
+		cout << "\n\nTcpConnection::onReadableEvent read buffer"
+				" can not expand any more\n" << endl;
+		exit(0);
+	}
+	char * buffer = new char[space]{0};
+	// char buffer[200];
+	int len = -1;
+	// bzero(buffer, sizeof(buffer));
+	len = read(_connfd, buffer, space);
+
+	// cout << "ondata [" << len << "]" << endl;
 
 	if(len <= 0)
 		onDisconnection();
-	else
-		onMessage(buffer);
+	else {
+		_readBuffer.write(buffer, len);
+
+		// _readBuffer.read();
+		onMessage();
+	}
+	delete[] buffer;
+}
+
+void TcpConnection::onWritableEvent()
+{
+	int size = _writeBuffer.getSize();
+	if(size <= 0) {
+		// cout << "TcpConnection::onWritableEvent nothing to write" << endl;
+		return;
+	}
+	// cout << "TcpConnection::onWritableEvent something to write" << endl;
+
+	char * buffer = new char[size]{0};
+	int len = -1;
+	_writeBuffer.copy(buffer, size);
+	len = write(_connfd, buffer, size);
+	if(len <= 0) {
+		cout << "TcpConnection::onWritableEvent len <= 0" << endl;
+	}
+	else {
+		// printf("TcpConnection::onWritableEvent [%d]\n", len);
+		_writeBuffer.forward(len);
+	}
+	delete[] buffer;
 }
 
 void TcpConnection::onDisconnection()
 {
-	// _disconnectionCallback();
-	cout << "tcp connection close" << endl;
+	// cout << "tcp connection close" << endl;
+	_disconnectionCallback(*this);
 	assert(close(_connfd) == 0);
 }
 
-void TcpConnection::onMessage(char * buffer)
+void TcpConnection::onMessage()
 {
+	_messageCallback(*this);
 	// _messageCallback();
 
-	char ok[20];
-	sprintf(ok, "HTTP/1.1 200 OK\r\n");
-	write(_connfd, ok, sizeof(ok));
+	// char ok[20];
+	// sprintf(ok, "HTTP/1.1 200 OK\r\n");
+	// write(_connfd, ok, sizeof(ok));
 
-	printf("TcpConnection::handleRead [%d] [%ld]",
-			_connfd, strlen(buffer));
-	printf("[");
-	for(int i = 0; i < strlen(buffer); ++i)
-		printf("%c", buffer[i]);
-	printf("]");
-	printf("\n");
+	// printf("TcpConnection::handleRead [%d] [%ld]",
+	// 		_connfd, strlen(buffer));
+	// printf("[");
+	// for(int i = 0; i < strlen(buffer); ++i)
+	// 	printf("%c", buffer[i]);
+	// printf("]");
+	// printf("\n");
 }

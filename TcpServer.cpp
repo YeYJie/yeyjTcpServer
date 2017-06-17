@@ -28,6 +28,11 @@ void TcpServer::setConnectionCallback(const ConnectionCallback & cb)
 	_connectionCallback = cb;
 }
 
+void TcpServer::setDisconnectionCallback(const DisconnectionCallback & cb)
+{
+	_disconnectionCallback = cb;
+}
+
 void TcpServer::setMessageCallback(const MessageCallback & cb)
 {
 	_messageCallback = cb;
@@ -84,7 +89,12 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 
 	worker->registerNewConnection(new TcpConnection(connSock, peerAddr,
 							   						_connectionCallback,
-							   						_messageCallback));
+							   						_disconnectionCallback,
+							   						_messageCallback,
+							   						_tcp_read_buffer_init_size_bytes,
+							   						_tcp_read_buffer_max_size_bytes,
+							   						_tcp_write_buffer_init_size_bytes,
+							   						_tcp_write_buffer_max_size_bytes));
 
 	// printf("TcpServer::newConnection\n");
 }

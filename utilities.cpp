@@ -14,6 +14,11 @@ int getTimeInMicroSecond()
 	return temp.tv_usec;
 }
 
+int getTimeInMilliSecond()
+{
+    return getTimeInMicroSecond() / 1000;
+}
+
 // string trim
 
 string & ltrim(string &s)
@@ -53,4 +58,22 @@ vector<string> split(const string & s, const string & d)
         v.push_back(t);
     delete[] str;
     return v;
+}
+
+
+// string format
+
+std::string format(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    int size = vsnprintf(nullptr, 0, fmt, ap) + 1;
+    va_end(ap);
+    char *buf = new char[size];
+    va_start(ap, fmt);
+    vsnprintf(buf, size, fmt, ap);
+    va_end(ap);
+    std::string fs(buf);
+    delete[] buf;
+    return fs;
 }

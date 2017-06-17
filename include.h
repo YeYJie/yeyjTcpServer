@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 #include <cassert>
+#include <cstdarg>
 #include <errno.h>
 
 #include <fcntl.h>
@@ -34,10 +35,15 @@
 
 using namespace std;
 
+int getTimeInSecond();
+int getTimeInMilliSecond();
+int getTimeInMicroSecond();
+
 string & ltrim(string &s);
 string & rtrim(string &s);
 string & trim(string &s);
 vector<string> split(const string & s, const string & delimiters);
 
+// class TcpConnection;
 
 #endif

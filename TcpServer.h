@@ -32,9 +32,6 @@ public:
 
 	~TcpServer();
 
-	typedef std::function<void ()> 	ConnectionCallback;
-	typedef std::function<void ()> 	MessageCallback;
-
 	typedef std::function<Worker*()> LoadBalanceFunc;
 
 	/*
@@ -45,6 +42,8 @@ public:
 	void stop();
 
 	void setConnectionCallback(const ConnectionCallback & cb);
+
+	void setDisconnectionCallback(const DisconnectionCallback & cb);
 
 	void setMessageCallback(const MessageCallback & cb);
 
@@ -69,6 +68,7 @@ private:
 	std::vector<Worker *> 		_threadPool;
 
 	ConnectionCallback 			_connectionCallback;
+	DisconnectionCallback 		_disconnectionCallback;
 	MessageCallback 			_messageCallback;
 
 	LoadBalanceFunc				_loadBalance;

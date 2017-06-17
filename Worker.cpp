@@ -76,7 +76,10 @@ void Worker::workFunction()
 			TcpConnection * conn = (TcpConnection *)events[i].data.ptr;
 			// conn->onMessage();
 			// cout << "connection data" << endl;
-			conn->onData();
+			if(events[i].events & EPOLLIN)
+				conn->onReadableEvent();
+			if(events[i].events & EPOLLOUT)
+				conn->onWritableEvent();
 		}
 		/* if there are incoming connections on the blocking queue,
 		 * registers them on the epoll instance
