@@ -87,15 +87,20 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 
 	Worker * worker = _loadBalance();
 
-	worker->registerNewConnection(new TcpConnection(connSock, peerAddr,
-													this,
-							   						// _connectionCallback,
-							   						// _disconnectionCallback,
-							   						// _messageCallback,
-							   						_tcp_read_buffer_init_size_bytes,
-							   						_tcp_read_buffer_max_size_bytes,
-							   						_tcp_write_buffer_init_size_bytes,
-							   						_tcp_write_buffer_max_size_bytes));
+	worker->registerNewConnection(
+		make_shared<TcpConnection>(connSock, peerAddr,
+									this,
+									_tcp_read_buffer_init_size_bytes,
+									_tcp_read_buffer_max_size_bytes,
+									_tcp_write_buffer_init_size_bytes,
+									_tcp_write_buffer_max_size_bytes)
+		// TcpConnectionPtr(new TcpConnection(connSock, peerAddr,
+		// 					this,
+		// 					_tcp_read_buffer_init_size_bytes,
+		// 					_tcp_read_buffer_max_size_bytes,
+		// 					_tcp_write_buffer_init_size_bytes,
+		// 					_tcp_write_buffer_max_size_bytes))
+								);
 
 	// printf("TcpServer::newConnection\n");
 }

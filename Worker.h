@@ -13,6 +13,7 @@ namespace yeyj
 
 class TcpServer;
 class TcpConnection;
+typedef shared_ptr<TcpConnection> TcpConnectionPtr;
 
 class Worker : public Thread
 {
@@ -32,7 +33,7 @@ public:
 	/*
 	 * 	This function would be called by the TcpServer thread
 	 * */
-	void registerNewConnection(TcpConnection * conn);
+	void registerNewConnection(const TcpConnectionPtr & conn);
 
 	int getConnectionNum() const { return _connectionPool.size(); }
 
@@ -55,9 +56,10 @@ private:
 	int 							_maxConnection;
 
 	MutexLock 						_mutex;
-	std::queue<TcpConnection *> 	_incomingConnection;
+	std::queue<TcpConnectionPtr> 	_incomingConnection;
 
-	std::unordered_map<int, TcpConnection*> 	_connectionPool;
+	// std::unordered_map<int, TcpConnectionPtr> 	_connectionPool;
+	std::vector<TcpConnectionPtr>	_connectionPool;
 
 	TcpServer * 					_master;
 };

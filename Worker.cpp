@@ -18,7 +18,7 @@ Worker::Worker(TcpServer * master) :
 	_epollfd = epoll_create(1);
 }
 
-void Worker::registerNewConnection(TcpConnection * conn)
+void Worker::registerNewConnection(const TcpConnectionPtr & conn)
 {
 	/*
 	 *	we should put the new connection into a blocking queue instead of
@@ -56,7 +56,8 @@ void Worker::workFunction()
 
 		for(int i = 0; i < nfds; ++i) {
 
-			TcpConnection * conn = (TcpConnection *)events[i].data.ptr;
+			TcpConnection * raw = (TcpConnection *)events[i].data.ptr;
+			TcpConnectionPtr conn = raw->shared_from_this();
 
 			if(events[i].events & EPOLLERR
 				|| events[i].events & EPOLLHUP)
@@ -74,10 +75,8 @@ void Worker::workFunction()
 				conn->onWritableEvent();
 
 			conn->updateEpollEvent();
-			// if(conn->hasSomethingToWrite()) {
 			epoll_ctl(_epollfd, EPOLL_CTL_MOD,
 						conn->getfd(), conn->getEpollEvent());
-			// }
 		}
 		/* if there are incoming connections on the blocking queue,
 		 * registers them on the epoll instance
@@ -97,7 +96,7 @@ void Worker::registerNewConnection()
 	// printf("Worker::registerNewConnection [size:%d]\n",
 	// 		_incomingConnection.size());
 
-	std::queue<TcpConnection *> temp;
+	std::queue<TcpConnectionPtr> temp;
 	{
 		MutexLockGuard lock(_mutex);
 		_incomingConnection.swap(temp);
@@ -105,26 +104,13 @@ void Worker::registerNewConnection()
 		// 	printf("Worker::registerNewConnection not empty\n");
 	}
 
-	// if(temp.size())
-	// 	printf("Worker::registerNewConnection temp[size:%d]\n",
-	// 			temp.size());
-
 	while(!temp.empty()) {
-		TcpConnection * conn = temp.front();
+		_connectionPool.push_back(std::move(temp.front()));
+		const TcpConnectionPtr & conn = _connectionPool.back();
+		conn->onConnection();
+		epoll_ctl(_epollfd, EPOLL_CTL_ADD,
+					conn->getfd(), conn->getEpollEvent());
 		temp.pop();
-
-		// conn->onConnection();
-		if(_connectionPool.find(conn->getHash()) == _connectionPool.end()) {
-			_connectionPool[conn->getHash()] = conn;
-			conn->onConnection();
-		}
-
-		// printf("Worker[%d]::registerNewConnection [%x] [%d] on [%d]\n",
-		// 		Thread::getTid(), conn, conn->getfd(), _epollfd);
-		epoll_ctl(_epollfd,
-				  EPOLL_CTL_ADD,
-				  conn->getfd(),
-				  conn->getEpollEvent());
 	}
 
 	// manageInactiveConnection();

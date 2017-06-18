@@ -76,15 +76,15 @@ int TcpConnection::receive(char * dst, int length)
 	return _readBuffer.read(dst, length);
 }
 
-int TcpConnection::getfd()
-{
-	return _connfd;
-}
+// int TcpConnection::getfd()
+// {
+// 	return _connfd;
+// }
 
-epoll_event * TcpConnection::getEpollEvent()
-{
-	return &_epollEvent;
-}
+// epoll_event * TcpConnection::getEpollEvent()
+// {
+// 	return &_epollEvent;
+// }
 
 void TcpConnection::onConnection()
 {

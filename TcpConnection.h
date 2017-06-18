@@ -11,7 +11,7 @@ namespace yeyj
 
 class TcpServer;
 
-class TcpConnection
+class TcpConnection : public enable_shared_from_this<TcpConnection>
 {
 public:
 
@@ -35,9 +35,9 @@ public:
 	int receive(char * dst, int length);
 
 
-	int getfd();
+	int getfd() const { return _connfd; }
 
-	epoll_event * getEpollEvent();
+	epoll_event * getEpollEvent() { return &_epollEvent; }
 
 	void onConnection();
 	void onDisconnection();
@@ -77,7 +77,7 @@ private:
 	int 						_lastActiveTime;
 };
 
-
+typedef shared_ptr<TcpConnection> TcpConnectionPtr;
 
 }
 
