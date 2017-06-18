@@ -52,6 +52,11 @@ private:
 
 	void manageInactiveConnection();
 
+	void removeConnection(const TcpConnectionPtr & conn);
+
+	void evictRandomN(int n);
+	const TcpConnectionPtr & getRandomConnection();
+
 	int 							_epollfd;
 	int 							_maxConnection;
 
@@ -59,7 +64,8 @@ private:
 	std::queue<TcpConnectionPtr> 	_incomingConnection;
 
 	// std::unordered_map<int, TcpConnectionPtr> 	_connectionPool;
-	std::vector<TcpConnectionPtr>	_connectionPool;
+	// std::vector<TcpConnectionPtr>	_connectionPool;
+	std::unordered_map<long long, TcpConnectionPtr> 	_connectionPool;
 
 	TcpServer * 					_master;
 };

@@ -87,8 +87,10 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 
 	Worker * worker = _loadBalance();
 
+	static long long id = 0;
+
 	worker->registerNewConnection(
-		make_shared<TcpConnection>(connSock, peerAddr,
+		make_shared<TcpConnection>(++id, connSock, peerAddr,
 									this,
 									_tcp_read_buffer_init_size_bytes,
 									_tcp_read_buffer_max_size_bytes,
@@ -198,6 +200,11 @@ void TcpServer::loadConfig(const char * configFileName)
 					_inactive_tcp_eviction_rule = INACTIVE_TCP_EVICTION_CLOSE;
 				cout << "config : inactive-tcp-eviction-rule" << " " << value << endl;
 			}
+			else if(key == "eviction-pool-size")
+			{
+				_eviction_pool_size = atoi(value.data());
+				cout << "config : eviction-pool-size" << " " << value << endl;
+			}
 			else if(key == "load-balance")
 			{
 				if(value == "round-robin")
@@ -279,6 +286,10 @@ int TcpServer::getInactiveTcpTimeOut() const {
 
 int TcpServer::getInactiveTcpEvictionRule() const {
 	return _inactive_tcp_eviction_rule;
+}
+
+int TcpServer::getEvictionPoolSize() const {
+	return _eviction_pool_size;
 }
 
 int TcpServer::getReadBufferInitSize() const {

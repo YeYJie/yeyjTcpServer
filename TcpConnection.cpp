@@ -1,18 +1,21 @@
 #include "TcpConnection.h"
 using namespace yeyj;
 
-TcpConnection::TcpConnection(const int & connfd,
+TcpConnection::TcpConnection(long long id,
+							 const int & connfd,
 							 const InetSockAddr & peerAddr,
 							 TcpServer * master,
 							 int read_buffer_init_size,
 							 int read_buffer_max_size,
 							 int write_buffer_init_size,
 							 int write_buffer_max_size) :
+	_id(id),
 	_connfd(connfd),
 	_peerAddr(peerAddr),
 	_master(master),
 	_readBuffer(read_buffer_init_size, read_buffer_max_size),
-	_writeBuffer(write_buffer_init_size, write_buffer_max_size)
+	_writeBuffer(write_buffer_init_size, write_buffer_max_size),
+	_close(false)
 {
 	/*	set the connection socket as non-blocking socket
 	 * */
@@ -27,6 +30,8 @@ TcpConnection::TcpConnection(const int & connfd,
 	_epollEvent.events = 0;
 	_epollEvent.events |= EPOLLIN;
 	_epollEvent.data.ptr = this;
+
+	_lastActiveTime = getTimeInSecond();
 	// printf("TcpConnection::constructor\n");
 }
 
@@ -150,7 +155,8 @@ void TcpConnection::onDisconnection()
 	// cout << "tcp connection close" << endl;
 	// _disconnectionCallback(*this);
 	_master->disconnectionCallback(*this);
-	assert(close(_connfd) == 0);
+	_close = true;
+	// assert(close(_connfd) == 0);
 }
 
 void TcpConnection::onMessage()

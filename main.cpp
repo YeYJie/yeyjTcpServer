@@ -2,12 +2,12 @@
 using namespace yeyj;
 using namespace std;
 
-int totalConnection = 0;
+// int totalConnection = 0;
 
 void onConnection(TcpConnection & conn)
 {
-	totalConnection++;
-	cout << "new connection : " << totalConnection << endl;
+	// totalConnection++;
+	cout << "new connection : " << conn.getId() << endl;
 }
 
 void onMessage(TcpConnection & conn)
@@ -19,8 +19,8 @@ void onMessage(TcpConnection & conn)
 
 void onDisconnection(TcpConnection & conn)
 {
-	totalConnection--;
-	cout << "disconnection : " << totalConnection << endl;
+	// totalConnection--;
+	cout << "disconnection : " << conn.getId() << endl;
 }
 
 int main()

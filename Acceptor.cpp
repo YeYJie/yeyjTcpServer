@@ -66,7 +66,7 @@ void Acceptor::start()
 								 &clientAddrLen);
 		assert(connectSock >= 0); /* assert or log ? */
 
-		cout << "accept" << connectSock << endl;
+		// cout << "accept" << connectSock << endl;
 
 		/* here we already get client addr info : */
 		/* 		connectSock and clientAddr 		  */

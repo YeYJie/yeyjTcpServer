@@ -15,7 +15,8 @@ class TcpConnection : public enable_shared_from_this<TcpConnection>
 {
 public:
 
-	explicit TcpConnection(const int & connfd,
+	explicit TcpConnection(long long id,
+						   const int & connfd,
 						   const InetSockAddr & peerAddr,
 						   TcpServer * master,
 						   int read_buffer_init_size,
@@ -48,13 +49,14 @@ public:
 
 	void onMessage();
 
-	int getHash()
-	{
-		// temp hash function
-		return _localAdddr.getIP() | _localAdddr.getPort() | _peerAddr.getIP() | _peerAddr.getPort();
-	}
+	long long getId() const { return _id; }
+
+	int getLastActiveTime() const { return _lastActiveTime; }
+
+	bool close() const { return _close; }
 
 	void updateEpollEvent() {
+		if(_close) return;
 		if(!_writeBuffer.empty())
 			_epollEvent.events |= EPOLLOUT;
 		else
@@ -62,6 +64,8 @@ public:
 	}
 
 private:
+
+	long long 					_id;
 
 	int 						_connfd;
 	struct epoll_event 			_epollEvent;
@@ -75,6 +79,7 @@ private:
 	Buffer 						_writeBuffer;
 
 	int 						_lastActiveTime;
+	bool 						_close;
 };
 
 typedef shared_ptr<TcpConnection> TcpConnectionPtr;

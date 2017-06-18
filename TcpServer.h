@@ -98,6 +98,8 @@ private:
 
 	int _inactive_tcp_eviction_rule;
 
+	int _eviction_pool_size;
+
 	// int _load_balance;
 
 	int _tcp_read_buffer_init_size_bytes;
@@ -124,6 +126,7 @@ public: // getter
 	int getMaxTcpEvictionRule() const;
 	int getInactiveTcpTimeOut() const;
 	int getInactiveTcpEvictionRule() const;
+	int getEvictionPoolSize() const;
 	int getReadBufferInitSize() const;
 	int getReadBufferMaxSize() const;
 	int getWriteBufferInitSize() const;

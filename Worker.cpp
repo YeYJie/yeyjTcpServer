@@ -1,14 +1,6 @@
 #include "Worker.h"
 using namespace yeyj;
 
-// Worker::Worker(const int & maxConnection) :
-// 	Thread(std::bind(&Worker::workFunction, this), "worker"),
-// 	_maxConnection(maxConnection),
-// 	_mutex()
-// {
-// 	_epollfd = epoll_create(1);
-// }
-
 Worker::Worker(TcpServer * master) :
 	_master(master),
 	Thread(std::bind(&Worker::workFunction, this), "worker"),
@@ -16,6 +8,7 @@ Worker::Worker(TcpServer * master) :
 	_mutex()
 {
 	_epollfd = epoll_create(1);
+	_connectionPool.max_load_factor(5);
 }
 
 void Worker::registerNewConnection(const TcpConnectionPtr & conn)
@@ -28,8 +21,6 @@ void Worker::registerNewConnection(const TcpConnectionPtr & conn)
 	 * */
 	MutexLockGuard lock(_mutex);
 	_incomingConnection.push(conn);
-	// printf("Worker::work [%x][size:%d]\n",
-	// 		conn, _incomingConnection.size());
 }
 
 void Worker::start()
@@ -74,15 +65,32 @@ void Worker::workFunction()
 			if(events[i].events & EPOLLOUT)
 				conn->onWritableEvent();
 
-			conn->updateEpollEvent();
-			epoll_ctl(_epollfd, EPOLL_CTL_MOD,
-						conn->getfd(), conn->getEpollEvent());
+			if(!conn->close()) {
+				conn->updateEpollEvent();
+				epoll_ctl(_epollfd, EPOLL_CTL_MOD,
+							conn->getfd(), conn->getEpollEvent());
+			}
+			else {
+				removeConnection(conn);
+			}
 		}
 		/* if there are incoming connections on the blocking queue,
 		 * registers them on the epoll instance
 		 * */
 		registerNewConnection();
+
+		manageInactiveConnection();
+
+		if(_connectionPool.size() > _master->getMaxTcpConnectionPerWorker())
+			eviction();
 	}
+}
+
+void Worker::removeConnection(const TcpConnectionPtr & conn)
+{
+	epoll_ctl(_epollfd, EPOLL_CTL_DEL, conn->getfd(), conn->getEpollEvent());
+	// _connectionPool.erase(remove(_connectionPool.begin(), _connectionPool.end(), conn));
+	_connectionPool.erase(conn->getId());
 }
 
 /*	new connection from master thread would be stored temporaily
@@ -105,18 +113,15 @@ void Worker::registerNewConnection()
 	}
 
 	while(!temp.empty()) {
-		_connectionPool.push_back(std::move(temp.front()));
-		const TcpConnectionPtr & conn = _connectionPool.back();
+		// _connectionPool.push_back(std::move(temp.front()));
+		// const TcpConnectionPtr & conn = _connectionPool.back();
+		const TcpConnectionPtr & conn = temp.front();
 		conn->onConnection();
 		epoll_ctl(_epollfd, EPOLL_CTL_ADD,
 					conn->getfd(), conn->getEpollEvent());
+		_connectionPool[conn->getId()] = std::move(temp.front());
 		temp.pop();
 	}
-
-	// manageInactiveConnection();
-
-	// if(_connectionPool.size() > _master->getMaxTcpConnectionPerWorker())
-	// 	eviction();
 }
 
 void Worker::eviction()
@@ -126,31 +131,23 @@ void Worker::eviction()
 	if(rule == MAX_TCP_EVICTION_NONE)
 		return;
 	else if(rule == MAX_TCP_EVICTION_RANDOM)
-	{
-		int poolguy = rand() % _connectionPool.size();
-		// _connectionPool.erase(_connectionPool.begin() + poolguy);
-	}
+		removeConnection(getRandomConnection());
 	else if(rule == MAX_TCP_EVICTION_INACTIVE)
-	{
-		static const int poolguyNum = 5;
-		static int poolguys[poolguyNum];
-		for(int i = 0; i < poolguyNum; ++i)
-			poolguys[i] = rand() % _connectionPool.size();
-
-		// TODO : the pool guy is the most inactive one
-		// int poolguy = findPoolGuy(poolguys, poolguyNum);
-		int poolguy = poolguys[0];
-
-		// _connectionPool.erase(_connectionPool.begin() + poolguy);
-	}
+		evictRandomN(_master->getEvictionPoolSize());
 	else
-	{
 		cout << "\n\ntcp server error eviction rule value\n" << endl;
-	}
 }
 
 void Worker::manageInactiveConnection()
 {
+	// if(_connectionPool.empty())
+	// 	cout << "connectionPool is empty" << endl;
+	// else {
+	// 	for(auto & i : _connectionPool)
+	// 		cout << i.second.use_count() << " ";
+	// 	cout << endl;
+	// }
+
 	int rule = _master->getInactiveTcpEvictionRule();
 
 	if(rule == INACTIVE_TCP_EVICTION_NONE) {
@@ -158,10 +155,41 @@ void Worker::manageInactiveConnection()
 		return;
 	}
 
-	static const int candidatesNum = 10;
-	int candidates[candidatesNum];
-	for(int i = 0; i < candidatesNum; ++i)
-		candidates[i] = rand() % _connectionPool.size();
+	evictRandomN(_master->getEvictionPoolSize());
+}
 
-	// TODO
+void Worker::evictRandomN(int n)
+{
+	int currentTime = getTimeInSecond();
+	long long mostInactiveId = -1;
+	int mostInactiveTime = 0;
+	for(int i = 0; i < n; ++i)
+	{
+		if(_connectionPool.empty())
+			return;
+		const TcpConnectionPtr & conn = getRandomConnection();
+		if(conn->close())
+			removeConnection(conn);
+		int inactiveTime = currentTime - conn->getLastActiveTime();
+		if(inactiveTime > mostInactiveTime) {
+			mostInactiveTime = inactiveTime;
+			mostInactiveId = conn->getId();
+		}
+	}
+	if(mostInactiveId >= 0
+		&& mostInactiveTime > _master->getInactiveTcpTimeOut())
+	{
+		printf("Worker::evictRandomN [%lld]\n", mostInactiveId);
+		removeConnection(_connectionPool[mostInactiveId]);
+	}
+}
+
+const TcpConnectionPtr & Worker::getRandomConnection()
+{
+	int bucketIndex = rand() % _connectionPool.bucket_count();
+	auto iter = _connectionPool.begin(bucketIndex);
+	int elementIndex = rand() % _connectionPool.bucket_size(bucketIndex);
+	while(elementIndex--)
+		++iter;
+	return iter->second;
 }
