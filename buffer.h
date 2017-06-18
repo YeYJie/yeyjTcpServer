@@ -31,6 +31,8 @@ public:
 		_begin = _end = _count = _currentSize = _maxSize = _growFactor = 0;
 	}
 
+	bool empty() const { return _count == 0; }
+
 	bool isFull() const { return _count == _currentSize; }
 
 	bool canGrow() const { return _currentSize < _maxSize; }

@@ -54,6 +54,13 @@ public:
 		return _localAdddr.getIP() | _localAdddr.getPort() | _peerAddr.getIP() | _peerAddr.getPort();
 	}
 
+	void updateEpollEvent() {
+		if(!_writeBuffer.empty())
+			_epollEvent.events |= EPOLLOUT;
+		else
+			_epollEvent.events &= ~EPOLLOUT;
+	}
+
 private:
 
 	int 						_connfd;

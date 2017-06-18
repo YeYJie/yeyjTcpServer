@@ -56,30 +56,28 @@ void Worker::workFunction()
 
 		for(int i = 0; i < nfds; ++i) {
 
-			/*	here we should check the value of fired fds' events field,
-			 *	if some errors happened to a connection, we should close
-			 *	that connection
-			 * */
-			// if((events[i].events & EPOLLERR)
-			//    || (events[i].events & EPOLLHUP)
-			//    || (!(events[i].events & EPOLLIN)))
-			// {
-			// 	/* some thing wrong with that connection */
-			// 	printf("Worker::workFunction connection error\n");
-			// }
-			if(events[i].events & EPOLLERR)
-				printf("Worker::workFunction EPOLLERR");
-
-			if(events[i].events & EPOLLHUP)
-				printf("Worker::workFunction EPOLLHUP");
-
 			TcpConnection * conn = (TcpConnection *)events[i].data.ptr;
-			// conn->onMessage();
-			// cout << "connection data" << endl;
+
+			if(events[i].events & EPOLLERR
+				|| events[i].events & EPOLLHUP)
+			{
+				epoll_ctl(_epollfd, EPOLL_CTL_DEL,
+							conn->getfd(), conn->getEpollEvent());
+				cout << "Worker::workFunction EPOLLERR or EPOLLHUP on "
+					<< conn->getfd() << endl;
+				// TODO : free the connection
+			}
+
 			if(events[i].events & EPOLLIN)
 				conn->onReadableEvent();
 			if(events[i].events & EPOLLOUT)
 				conn->onWritableEvent();
+
+			conn->updateEpollEvent();
+			// if(conn->hasSomethingToWrite()) {
+			epoll_ctl(_epollfd, EPOLL_CTL_MOD,
+						conn->getfd(), conn->getEpollEvent());
+			// }
 		}
 		/* if there are incoming connections on the blocking queue,
 		 * registers them on the epoll instance

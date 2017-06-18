@@ -25,7 +25,7 @@ TcpConnection::TcpConnection(const int & connfd,
 			   &shit, sizeof(int));
 
 	_epollEvent.events = 0;
-	_epollEvent.events |= EPOLLIN | EPOLLOUT;
+	_epollEvent.events |= EPOLLIN;
 	_epollEvent.data.ptr = this;
 	// printf("TcpConnection::constructor\n");
 }
@@ -124,12 +124,12 @@ void TcpConnection::onReadableEvent()
 
 void TcpConnection::onWritableEvent()
 {
+	// cout << "TcpConnection::onWritableEvent something to write" << endl;
 	int size = _writeBuffer.getSize();
 	if(size <= 0) {
 		// cout << "TcpConnection::onWritableEvent nothing to write" << endl;
 		return;
 	}
-	// cout << "TcpConnection::onWritableEvent something to write" << endl;
 
 	char * buffer = new char[size]{0};
 	int len = -1;
