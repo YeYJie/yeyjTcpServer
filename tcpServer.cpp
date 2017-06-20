@@ -96,15 +96,7 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 									_tcp_read_buffer_max_size_bytes,
 									_tcp_write_buffer_init_size_bytes,
 									_tcp_write_buffer_max_size_bytes)
-		// TcpConnectionPtr(new TcpConnection(connSock, peerAddr,
-		// 					this,
-		// 					_tcp_read_buffer_init_size_bytes,
-		// 					_tcp_read_buffer_max_size_bytes,
-		// 					_tcp_write_buffer_init_size_bytes,
-		// 					_tcp_write_buffer_max_size_bytes))
 								);
-
-	// printf("TcpServer::newConnection\n");
 }
 
 /*

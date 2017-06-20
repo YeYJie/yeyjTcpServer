@@ -28,7 +28,7 @@ TcpConnection::TcpConnection(uint64_t id,
 			   &shit, sizeof(int));
 
 	_epollEvent.events = 0;
-	_epollEvent.events |= EPOLLIN;
+	_epollEvent.events |= EPOLLIN | EPOLLOUT | EPOLLET;
 	// _epollEvent.data.ptr = this;
 	_epollEvent.data.u64 = _id;
 
@@ -110,17 +110,25 @@ void TcpConnection::onReadableEvent()
 		exit(0);
 	}
 	char * buffer = new char[space]{0};
-	// char buffer[200];
-	int len = -1;
-	// bzero(buffer, sizeof(buffer));
-	len = read(_connfd, buffer, space);
+	// int len = -1;
+	// len = read(_connfd, buffer, space);
 
+	int ret = 0;
+	int totalRead = 0;
+	while((ret = read(_connfd, buffer + totalRead, space)) > 0) {
+		totalRead += ret;
+		space -= ret;
+	}
+
+	if(ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK
+		&& errno != ECONNABORTED && errno != EPROTO && errno != EINTR)
+		cout << "\n\nTcpConnection::onReadableEvent : fatal error" << endl;
 	// cout << "ondata [" << len << "]" << endl;
 
-	if(len <= 0)
+	if(totalRead <= 0)
 		onDisconnection();
 	else {
-		_readBuffer.write(buffer, len);
+		_readBuffer.write(buffer, totalRead);
 
 		// _readBuffer.read();
 		onMessage();
@@ -130,23 +138,37 @@ void TcpConnection::onReadableEvent()
 
 void TcpConnection::onWritableEvent()
 {
-	// cout << "TcpConnection::onWritableEvent something to write" << endl;
+	_lastActiveTime = getTimeInSecond();
+
 	int size = _writeBuffer.getSize();
 	if(size <= 0) {
 		// cout << "TcpConnection::onWritableEvent nothing to write" << endl;
 		return;
 	}
 
+	// cout << "TcpConnection::onWritableEvent() [" << size << "]" << endl;
+
 	char * buffer = new char[size]{0};
-	int len = -1;
+	// int len = -1;
 	_writeBuffer.copy(buffer, size);
-	len = write(_connfd, buffer, size);
-	if(len <= 0) {
+	// len = write(_connfd, buffer, size);
+
+	int ret = 0;
+	int totalWrite = 0;
+	while((ret = write(_connfd, buffer + totalWrite, size)) > 0) {
+		totalWrite += ret;
+		size -= ret;
+	}
+	if(ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK
+		&& errno != ECONNABORTED && errno != EPROTO && errno != EINTR)
+		cout << "\n\nTcpConnection::onWritableEvent : fatal error" << endl;
+
+	if(totalWrite <= 0) {
 		cout << "TcpConnection::onWritableEvent len <= 0" << endl;
 	}
 	else {
 		// printf("TcpConnection::onWritableEvent [%d]\n", len);
-		_writeBuffer.forward(len);
+		_writeBuffer.forward(totalWrite);
 	}
 	delete[] buffer;
 }

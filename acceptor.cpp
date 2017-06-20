@@ -30,7 +30,7 @@ Acceptor::Acceptor(const int & port) :
 	assert(_epollfd >= 0);
 
 	struct epoll_event ev;
-	ev.events = EPOLLIN;
+	ev.events = EPOLLIN | EPOLLET;
 	ev.data.fd = _listenfd;
 
 	epoll_ctl(_epollfd, EPOLL_CTL_ADD, _listenfd, &ev);
@@ -59,19 +59,17 @@ void Acceptor::start()
 		assert(nfds == 1);
 		assert(events[0].data.fd == _listenfd);
 
-		sockaddr_in clientAddr;
-		unsigned int clientAddrLen = sizeof(clientAddr);
-		int connectSock = accept(_listenfd,
-								 (struct sockaddr *)&clientAddr,
-								 &clientAddrLen);
-		assert(connectSock >= 0); /* assert or log ? */
-
-		// cout << "accept" << connectSock << endl;
-
-		/* here we already get client addr info : */
-		/* 		connectSock and clientAddr 		  */
-
-		// printf("Acceptor::start\n");
-		_connectionCallback(connectSock, InetSockAddr(clientAddr));
+		int ret = 0;
+		while(true) { // edge-trigger
+			sockaddr_in clientAddr;
+			unsigned int clientAddrLen = sizeof(clientAddr);
+			int ret = accept(_listenfd,
+								(struct sockaddr *)&clientAddr,
+								&clientAddrLen);
+			if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+				break;
+			assert(ret >= 0);
+			_connectionCallback(ret, InetSockAddr(clientAddr));
+		}
 	}
 }

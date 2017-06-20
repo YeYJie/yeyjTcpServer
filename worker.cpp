@@ -69,12 +69,12 @@ void Worker::workFunction()
 			if(events[i].events & EPOLLOUT)
 				conn->onWritableEvent();
 
-			if(!conn->close()) {
-				conn->updateEpollEvent();
-				epoll_ctl(_epollfd, EPOLL_CTL_MOD,
-							conn->getfd(), conn->getEpollEvent());
-			}
-			else {
+			// if(!conn->close()) {
+			// 	conn->updateEpollEvent();
+			// 	epoll_ctl(_epollfd, EPOLL_CTL_MOD,
+			// 				conn->getfd(), conn->getEpollEvent());
+			// }
+			if(conn->close()) {
 				removeConnection(conn);
 			}
 		}
