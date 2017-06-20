@@ -1,7 +1,7 @@
 #include "TcpConnection.h"
 using namespace yeyj;
 
-TcpConnection::TcpConnection(long long id,
+TcpConnection::TcpConnection(uint64_t id,
 							 const int & connfd,
 							 const InetSockAddr & peerAddr,
 							 TcpServer * master,
@@ -29,7 +29,8 @@ TcpConnection::TcpConnection(long long id,
 
 	_epollEvent.events = 0;
 	_epollEvent.events |= EPOLLIN;
-	_epollEvent.data.ptr = this;
+	// _epollEvent.data.ptr = this;
+	_epollEvent.data.u64 = _id;
 
 	_lastActiveTime = getTimeInSecond();
 	// printf("TcpConnection::constructor\n");
@@ -95,7 +96,7 @@ void TcpConnection::onConnection()
 {
 	// cout << "new tcp connection" << endl;
 	// _connectionCallback(*this);
-	_master->connectionCallback(*this);
+	_master->connectionCallback(shared_from_this());
 }
 
 void TcpConnection::onReadableEvent()
@@ -154,12 +155,12 @@ void TcpConnection::onDisconnection()
 {
 	// cout << "tcp connection close" << endl;
 	// _disconnectionCallback(*this);
-	_master->disconnectionCallback(*this);
+	_master->disconnectionCallback(shared_from_this());
 	_close = true;
 	// assert(close(_connfd) == 0);
 }
 
 void TcpConnection::onMessage()
 {
-	_master->messageCallback(*this);
+	_master->messageCallback(shared_from_this());
 }

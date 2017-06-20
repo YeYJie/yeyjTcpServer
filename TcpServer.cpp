@@ -87,7 +87,7 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 
 	Worker * worker = _loadBalance();
 
-	static long long id = 0;
+	static uint64_t id = 0;
 
 	worker->registerNewConnection(
 		make_shared<TcpConnection>(++id, connSock, peerAddr,

@@ -15,7 +15,7 @@ class TcpConnection : public enable_shared_from_this<TcpConnection>
 {
 public:
 
-	explicit TcpConnection(long long id,
+	explicit TcpConnection(uint64_t id,
 						   const int & connfd,
 						   const InetSockAddr & peerAddr,
 						   TcpServer * master,
@@ -49,7 +49,7 @@ public:
 
 	void onMessage();
 
-	long long getId() const { return _id; }
+	uint64_t getId() const { return _id; }
 
 	int getLastActiveTime() const { return _lastActiveTime; }
 
@@ -65,7 +65,7 @@ public:
 
 private:
 
-	long long 					_id;
+	uint64_t 					_id;
 
 	int 						_connfd;
 	struct epoll_event 			_epollEvent;

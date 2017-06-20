@@ -23,9 +23,11 @@ namespace yeyj
 
 class Worker;
 class TcpConnection;
-typedef std::function<void (TcpConnection & conn)> 	ConnectionCallback;
-typedef std::function<void (TcpConnection & conn)> 	DisconnectionCallback;
-typedef std::function<void (TcpConnection & conn)> 	MessageCallback;
+typedef shared_ptr<TcpConnection> TcpConnectionPtr;
+
+typedef std::function<void (const TcpConnectionPtr & conn)> 	ConnectionCallback;
+typedef std::function<void (const TcpConnectionPtr & conn)> 	DisconnectionCallback;
+typedef std::function<void (const TcpConnectionPtr & conn)> 	MessageCallback;
 
 class TcpServer
 {

@@ -4,23 +4,23 @@ using namespace std;
 
 // int totalConnection = 0;
 
-void onConnection(TcpConnection & conn)
+void onConnection(const TcpConnectionPtr & conn)
 {
 	// totalConnection++;
-	cout << "new connection : " << conn.getId() << endl;
+	cout << "new connection : " << conn->getId() << endl;
 }
 
-void onMessage(TcpConnection & conn)
+void onMessage(const TcpConnectionPtr & conn)
 {
-	string message = conn.receiveAsString();
-	conn.send(message);
+	string message = conn->receiveAsString();
+	conn->send(message);
 	cout << message << endl;
 }
 
-void onDisconnection(TcpConnection & conn)
+void onDisconnection(const TcpConnectionPtr & conn)
 {
 	// totalConnection--;
-	cout << "disconnection : " << conn.getId() << endl;
+	cout << "disconnection : " << conn->getId() << endl;
 }
 
 int main()

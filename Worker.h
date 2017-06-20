@@ -7,6 +7,7 @@
 #include "TcpConnection.h"
 #include "Mutex.h"
 // #include "TcpServer.h"
+#include "hash.h"
 
 namespace yeyj
 {
@@ -54,8 +55,9 @@ private:
 
 	void removeConnection(const TcpConnectionPtr & conn);
 
-	void evictRandomN(int n);
-	const TcpConnectionPtr & getRandomConnection();
+	void evictRandomN(int n, bool force);
+
+private:
 
 	int 							_epollfd;
 	int 							_maxConnection;
@@ -65,7 +67,8 @@ private:
 
 	// std::unordered_map<int, TcpConnectionPtr> 	_connectionPool;
 	// std::vector<TcpConnectionPtr>	_connectionPool;
-	std::unordered_map<long long, TcpConnectionPtr> 	_connectionPool;
+	// std::unordered_map<uint64_t, TcpConnectionPtr> 	_connectionPool;
+	yeyj::HashTable<uint64_t, TcpConnectionPtr> 	_connectionPool;
 
 	TcpServer * 					_master;
 };

@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <cassert>
 #include <cstdarg>
+#include <cstdint>
 #include <errno.h>
 
 #include <fcntl.h>
