@@ -2,9 +2,9 @@
 #define _THREADPOOL_H_
 
 #include "include.h"
-#include "Thread.h"
-#include "Mutex.h"
-#include "Condition.h"
+#include "thread.h"
+#include "mutex.h"
+#include "condition.h"
 
 namespace yeyj
 {

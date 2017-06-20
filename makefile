@@ -5,8 +5,8 @@ CXXFLAGS = -g -std=c++11
 LDFLAGS = -pthread
 
 
-OBJS = main.o TcpServer.o Acceptor.o AsyncLogging.o Thread.o \
-		Mutex.o Worker.o TcpConnection.o utilities.o
+OBJS = main.o tcpServer.o acceptor.o asyncLogging.o thread.o \
+		mutex.o worker.o tcpConnection.o utilities.o
 
 EXE = fyyj
 

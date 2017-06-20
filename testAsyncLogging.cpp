@@ -1,8 +1,8 @@
 #include <unistd.h>
 #include <iostream>
 #include <stdio.h>
-#include "AsyncLogging.h"
-#include "Thread.h"
+#include "asyncLogging.h"
+#include "thread.h"
 #include <string>
 using namespace std;
 using namespace yeyj;
@@ -26,7 +26,7 @@ int main()
 {
 	// g_log = new AsyncLogging("shit");
 	// g_log->start();
-	
+
 	setGlobalLoggerName("shit");
 	setGlobalLoggerFlushInterval(2);
 	setGlobalLoggerHighWaterMask(100);

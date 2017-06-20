@@ -2,9 +2,9 @@
 #define _TCPCONNECTION_H_
 
 #include "include.h"
-#include "InetSockAddr.h"
+#include "inetSockAddr.h"
 #include "buffer.h"
-#include "TcpServer.h"
+#include "tcpServer.h"
 
 namespace yeyj
 {

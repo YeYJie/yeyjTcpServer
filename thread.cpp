@@ -1,4 +1,4 @@
-#include "Thread.h"
+#include "thread.h"
 using namespace yeyj;
 
 Thread::Thread(const ThreadFunc & threadfunc,

@@ -1,4 +1,4 @@
-#include "AsyncLogging.h"
+#include "asyncLogging.h"
 #include <unistd.h>
 #include <cassert>
 
@@ -37,10 +37,10 @@ void AsyncLogging::stop()
 void AsyncLogging::append(const string & logline)
 {
 	if(!_running) return;
-	
+
 	MutexLockGuard lock(_mutex);
 	_currentBuffer.push_back(logline);
-	
+
 	if(_currentBuffer.size() >= _highWaterMask){
 		// printf("AsyncLogging::append %d\n", _currentBuffer.size());
 		_cond.notify();
@@ -61,7 +61,7 @@ void AsyncLogging::setHighWaterMask(const int & highWaterMask)
 
 void AsyncLogging::setName(const std::string & newName)
 {
-	_logfilename = newName;	
+	_logfilename = newName;
 }
 
 
@@ -75,7 +75,7 @@ using namespace std;
 class LogFile
 {
 public:
-	
+
 	LogFile(const string & name) {
 		_file = fopen(name.data(), "a");
 	}
@@ -90,7 +90,7 @@ public:
 	}
 
 private:
-	FILE * 		_file;		
+	FILE * 		_file;
 };
 
 /*

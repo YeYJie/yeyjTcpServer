@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Thread.h"
+#include "thread.h"
 using namespace std;
 using namespace yeyj;
 

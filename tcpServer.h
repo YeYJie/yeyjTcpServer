@@ -2,9 +2,9 @@
 #define _TCPSERVER_H_
 
 #include "include.h"
-#include "Acceptor.h"
-#include "AsyncLogging.h"
-#include "Worker.h"
+#include "acceptor.h"
+#include "asyncLogging.h"
+#include "worker.h"
 // #include "TcpConnection.h"
 
 namespace yeyj

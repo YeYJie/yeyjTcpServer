@@ -1,5 +1,5 @@
-#include "Acceptor.h"
-#include "AsyncLogging.h"
+#include "acceptor.h"
+#include "asyncLogging.h"
 using namespace yeyj;
 
 Acceptor::Acceptor(const int & port) :

@@ -3,9 +3,9 @@
 
 #include "include.h"
 // #include "InetSockAddr.h"
-#include "Thread.h"
-#include "TcpConnection.h"
-#include "Mutex.h"
+#include "thread.h"
+#include "tcpConnection.h"
+#include "mutex.h"
 // #include "TcpServer.h"
 #include "hash.h"
 

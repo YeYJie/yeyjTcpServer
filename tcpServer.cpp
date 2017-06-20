@@ -1,5 +1,5 @@
-#include "TcpServer.h"
-#include "AsyncLogging.h"
+#include "tcpServer.h"
+#include "asyncLogging.h"
 
 using namespace yeyj;
 

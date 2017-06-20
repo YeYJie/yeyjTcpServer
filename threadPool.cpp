@@ -1,4 +1,4 @@
-#include "ThreadPool.h"
+#include "threadPool.h"
 using namespace yeyj;
 
 ThreadPool::ThreadPool(const string & name) :

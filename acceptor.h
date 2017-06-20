@@ -2,7 +2,7 @@
 #define _ACCEPTOR_H_
 
 #include "include.h"
-#include "InetSockAddr.h"
+#include "inetSockAddr.h"
 
 namespace yeyj
 {
