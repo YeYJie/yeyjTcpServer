@@ -31,6 +31,8 @@ public:
 		_begin = _end = _count = _currentSize = _maxSize = _growFactor = 0;
 	}
 
+	int size() const { return _count; }
+
 	bool empty() const { return _count == 0; }
 
 	bool isFull() const { return _count == _currentSize; }
@@ -81,9 +83,16 @@ public:
 		return n;
 	}
 
-	void forward(int n) {
+	void skipHead(int n) {
+		assert(_count >= n);
 		_count -= n;
 		_begin = (_begin + n) % _currentSize;
+	}
+
+	void skipTail(int n) {
+		assert(_count >= n);
+		_count -= n;
+		_end = (_end - n) % _currentSize;
 	}
 
 	int copy(char * dst) const {
@@ -125,6 +134,71 @@ public:
 			++_count;
 		}
 		return n;
+	}
+
+	// check nothing and never cause the buffer to grow
+	void putChar(const char c)
+	{
+		_data[_end] = c;
+		_end = (_end + 1) % _currentSize;
+		++_count;
+	}
+
+	// check nothing
+	char getChar()
+	{
+		char res = _data[_begin];
+		_begin = (_begin + 1) % _currentSize;
+		--_count;
+	}
+
+	// chech nothing
+	char peekChar(int offset) const
+	{
+		int index = (_begin + offset) % _currentSize;
+		return _data[index];
+	}
+
+	// return 1 if success, 0 if fails
+	int peekIntWithoutLength(int * res, const char delimiter = ' ') const
+	{
+		int offset = 0;
+		*res = 0;
+		char currentChar;
+		while(offset + 1 <= _count)
+		{
+			currentChar = peekChar(offset);
+			if(isdigit(currentChar))
+				*res = *res * 10 + (currentChar - '0');
+			else
+				break;
+			++offset;
+		}
+		if(currentChar != delimiter)
+			return 0;
+		else
+			return 1;
+	}
+
+	int peekIntWithLength(int * res, int * length, const char delimiter = ' ') const
+	{
+		int offset = 0;
+		*res = 0;
+		char currentChar;
+		while(offset + 1 <= _count)
+		{
+			currentChar = peekChar(offset);
+			if(isdigit(currentChar))
+				*res = *res * 10 + (currentChar - '0');
+			else
+				break;
+			++offset;
+		}
+		*length = offset;
+		if(currentChar != delimiter)
+			return 0;
+		else
+			return 1;
 	}
 
 	void print() {

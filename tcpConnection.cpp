@@ -41,7 +41,7 @@ TcpConnection::~TcpConnection()
 
 }
 
-void TcpConnection::send(const std::string & str)
+void TcpConnection::sendRaw(const std::string & str)
 {
 	if(_writeBuffer.getMaxSpace() < str.size()) {
 		cout << "TcpConnection::send : str is too long";
@@ -49,37 +49,101 @@ void TcpConnection::send(const std::string & str)
 	_writeBuffer.write(str);
 }
 
-void TcpConnection::send(const char * str)
+void TcpConnection::sendRaw(const char * str)
 {
-	send(str, strlen(str));
+	sendRaw(str, strlen(str));
 }
 
-void TcpConnection::send(const char * str, int size)
+void TcpConnection::sendRaw(const char * str, int size)
 {
 	if(_writeBuffer.getMaxSpace() < size) {
-		cout << "TcpConnection::send : str is too long";
+		cout << "TcpConnection::sendRaw : str is too long";
 	}
 	_writeBuffer.write(str, size);
 }
 
-std::string TcpConnection::receiveAsString()
+void TcpConnection::sendMessage(const std::string & str)
+{
+	string buf = format("%d %s", str.size(), str.data());
+	if(_writeBuffer.getMaxSpace() < buf.size()) {
+		cout << "TcpConnection::sendMessage : str is too long";
+	}
+	_writeBuffer.write(buf);
+}
+
+void TcpConnection::sendMessage(const char * str)
+{
+	sendMessage(str, strlen(str));
+}
+
+void TcpConnection::sendMessage(const char * str, int size)
+{
+	string buf = format("%d %s", size, str);
+	if(_writeBuffer.getMaxSpace() < buf.size()) {
+		cout << "TcpConnection::sendMessage : str is too long";
+	}
+	_writeBuffer.write(buf);
+}
+
+std::string TcpConnection::receiveRawAsString()
 {
 	return _readBuffer.readAsString();
 }
 
-std::string TcpConnection::receiveAsString(int length)
+std::string TcpConnection::receiveRawAsString(int length)
 {
 	return _readBuffer.readAsString(length);
 }
 
-int TcpConnection::receive(char * dst)
+int TcpConnection::receiveRaw(char * dst)
 {
 	return _readBuffer.read(dst);
 }
 
-int TcpConnection::receive(char * dst, int length)
+int TcpConnection::receiveRaw(char * dst, int length)
 {
 	return _readBuffer.read(dst, length);
+}
+
+std::string TcpConnection::receiveMessageAsString()
+{
+	std::string res = "";
+	int temp, tempLen;
+	int ret = _readBuffer.peekIntWithLength(&temp, &tempLen);
+	if(ret) {
+		// cout << "TcpConnection::receiveMessageAsString ["
+		// 	<< temp << "]" << endl;
+		if(_readBuffer.size() >= tempLen + 1 + temp)
+		{
+			_readBuffer.skipHead(tempLen + 1);
+			return receiveRawAsString(temp);
+		}
+		else
+		{
+			cout << "TcpConnection::receiveMessageAsString :"
+				<< "incomplete message" << endl;
+		}
+	}
+	return res;
+}
+
+int TcpConnection::receiveMessage(char * dst)
+{
+	int temp, tempLen;
+	int ret = _readBuffer.peekIntWithLength(&temp, &tempLen);
+	if(ret) {
+		if(_readBuffer.size() >= tempLen + 1 + temp)
+		{
+			_readBuffer.skipHead(tempLen + 1);
+			return receiveRaw(dst, temp);
+		}
+		else
+		{
+			cout << "TcpConnection::receiveMessageAsString :"
+				<< "incomplete message" << endl;
+		}
+	}
+	return 0;
 }
 
 // int TcpConnection::getfd()
@@ -168,7 +232,7 @@ void TcpConnection::onWritableEvent()
 	}
 	else {
 		// printf("TcpConnection::onWritableEvent [%d]\n", len);
-		_writeBuffer.forward(totalWrite);
+		_writeBuffer.skipHead(totalWrite);
 	}
 	delete[] buffer;
 }

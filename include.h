@@ -46,6 +46,8 @@ string & rtrim(string &s);
 string & trim(string &s);
 vector<string> split(const string & s, const string & delimiters);
 
+std::string format(const char *fmt, ...);
+
 // class TcpConnection;
 
 #endif

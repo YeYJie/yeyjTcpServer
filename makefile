@@ -2,7 +2,7 @@ CXX = g++
 
 CXXFLAGS = -g -std=c++11
 
-LDFLAGS = -pthread
+LDFLAGS = -pthread -ltcmalloc
 
 
 OBJS = main.o tcpServer.o acceptor.o asyncLogging.o thread.o \

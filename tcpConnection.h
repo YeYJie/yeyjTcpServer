@@ -26,14 +26,21 @@ public:
 	~TcpConnection();
 
 
-	void send(const std::string & str);
-	void send(const char * str);
-	void send(const char * str, int size);
+	void sendRaw(const std::string & str);
+	void sendRaw(const char * str);
+	void sendRaw(const char * str, int size);
 
-	std::string receiveAsString();
-	std::string receiveAsString(int length);
-	int receive(char * dst);
-	int receive(char * dst, int length);
+	void sendMessage(const std::string & str);
+	void sendMessage(const char * str);
+	void sendMessage(const char * str, int size);
+
+	std::string receiveRawAsString();
+	std::string receiveRawAsString(int length);
+	int receiveRaw(char * dst);
+	int receiveRaw(char * dst, int length);
+
+	std::string receiveMessageAsString();
+	int receiveMessage(char * dst);
 
 
 	int getfd() const { return _connfd; }
