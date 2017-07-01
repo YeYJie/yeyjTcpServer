@@ -8,6 +8,7 @@ void onConnection(const TcpConnectionPtr & conn)
 {
 	// totalConnection++;
 	cout << "new connection : " << conn->getId() << endl;
+	conn->log(LOG_DEBUG, "yeyongjie");
 }
 
 void onMessage(const TcpConnectionPtr & conn)
@@ -41,6 +42,6 @@ int main()
 	server.setConnectionCallback(onConnection);
 	server.setMessageCallback(onMessage);
 	server.setDisconnectionCallback(onDisconnection);
-	server.start(1);
+	server.start(2);
 	return 0;
 }

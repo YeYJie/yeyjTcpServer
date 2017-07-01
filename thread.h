@@ -35,7 +35,7 @@ private:
 
 private:
 	string 		_name;
-	pthread_t 	_tid;
+	pthread_t 	_tid = 0;
 	ThreadFunc	_threadfunc;
 
 };

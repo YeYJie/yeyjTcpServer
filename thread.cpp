@@ -23,7 +23,9 @@ void * Thread::startThread(void * obj)
 
 void Thread::start()
 {
+	// cout << _tid << endl;
 	pthread_create(&_tid, NULL, &startThread, this);
+	// cout << _tid << endl;
 }
 
 void Thread::join()

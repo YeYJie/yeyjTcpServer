@@ -4,23 +4,29 @@
 using namespace yeyj;
 
 
-TcpServer::TcpServer(int port) : _acceptor(port)
+TcpServer::TcpServer(int port) : _acceptor(port), _name("master")
 {
 	loadConfig("yeyj.config");
+
+	updateTime();
+
+	_logger.setName(_log_file_name_prefix);
+	_logger.start();
+
+	_tid = pthread_self();
+	// cout << _tid << endl;
 
 	_acceptor.setConnectionCallback(
 		std::bind(&TcpServer::newConnection,
 				  this,
 				  std::placeholders::_1,
 				  std::placeholders::_2));
-
-	// setGlobalLoggerName(_log_file_name_prefix);
-	// startGlobalLogging();
+	_acceptor.setServerCron(std::bind(&TcpServer::serverCron, this));
 }
 
 TcpServer::~TcpServer()
 {
-	stopGlobalLogging();
+	// stopGlobalLogging();
 }
 
 void TcpServer::setConnectionCallback(const ConnectionCallback & cb)
@@ -73,13 +79,10 @@ Worker * TcpServer::loadBalanceIPHash(uint32_t ip)
 
 void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 {
-	// YEYJ_LOG("TcpServer::newConnection [%s] [%d]\n",
-	// 		 peerAddr.getIpAsChar(),
-	// 		 peerAddr.getPort());
-
-	// printf("TcpServer::newConnection [%s] [%d]\n",
-	// 		peerAddr.getIpAsChar(),
-	// 		peerAddr.getPort());
+	printf("TcpServer::newConnection [%d] [%s] [%d]\n",
+			connSock,
+			peerAddr.getIpAsChar(),
+			peerAddr.getPort());
 
 	Worker * worker = _loadBalance(peerAddr.getIP());
 
@@ -88,11 +91,50 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 	worker->registerNewConnection(
 		make_shared<TcpConnection>(++id, connSock, peerAddr,
 									this,
+									worker,
 									_tcp_read_buffer_init_size_bytes,
 									_tcp_read_buffer_max_size_bytes,
 									_tcp_write_buffer_init_size_bytes,
 									_tcp_write_buffer_max_size_bytes)
 								);
+}
+
+void TcpServer::serverCron()
+{
+	// cout << "TcpServer::serverCron" << endl;
+	updateTime();
+	checkMaxMemory();
+}
+
+void TcpServer::checkMaxMemory()
+{
+	double vm_usage = 0, resident_set = 0;
+	process_mem_usage(vm_usage, resident_set);
+	// cout << "TcpServer::checkMaxMemory " << vm_usage << " " << resident_set
+		<< " " << _max_vm_kb << " " << _max_rss_kb << endl;
+	if(vm_usage > _max_vm_kb || resident_set > _max_rss_kb) {
+		_exceedMaxMemory = true;
+		// cout << "TcpServer::checkMaxMemory _exceedMaxMemory = true" << endl;
+	}
+	else
+		_exceedMaxMemory = false;
+}
+
+void TcpServer::updateTime()
+{
+	char timeBuffer[20];
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+    sprintf(timeBuffer, "%4d/%02d/%02d %02d:%02d:%02d",
+                       timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+                       timeinfo->tm_mday, timeinfo->tm_hour,
+                       timeinfo->tm_min, timeinfo->tm_sec);
+    timeBuffer[19] = '\0';
+    string temp(timeBuffer);
+    _timeString.swap(temp);
 }
 
 /*
@@ -110,7 +152,7 @@ void TcpServer::start(const int & n)
 		_threadPool[i]->setMaxConnection(maxConnection);
 		_threadPool[i]->start();
 	}
-	_acceptor.start();
+	_acceptor.start(10);
 }
 
 /*
@@ -123,6 +165,19 @@ void TcpServer::stop()
 		_threadPool[i]->stop();
 }
 
+static int convertToKB(string & value)
+{
+	char c = value.back();
+	int factor = 0;
+	if(c == 'K')
+		factor = 1;
+	else if(c == 'M')
+		factor = 1024;
+	else if(c == 'G')
+		factor = 1024 * 1024;
+	value[value.size() - 1] = '\0';
+	return factor * atoi(value.data());
+}
 
 void TcpServer::loadConfig(const char * configFileName)
 {
@@ -188,6 +243,18 @@ void TcpServer::loadConfig(const char * configFileName)
 					_inactive_tcp_eviction_rule = INACTIVE_TCP_EVICTION_CLOSE;
 				cout << "config : inactive-tcp-eviction-rule" << " " << value << endl;
 			}
+
+			else if(key == "max-vm-memory")
+			{
+				_max_vm_kb = convertToKB(value);
+				cout << "config : max-vm-memory " << _max_vm_kb << endl;
+			}
+			else if(key == "max-rss")
+			{
+				_max_rss_kb = convertToKB(value);
+				cout << "config : max-rss " << _max_rss_kb << endl;
+			}
+
 			else if(key == "eviction-pool-size")
 			{
 				_eviction_pool_size = atoi(value.data());
@@ -210,22 +277,26 @@ void TcpServer::loadConfig(const char * configFileName)
 			}
 			else if(key == "tcp-read-buffer-init-size-bytes")
 			{
-				_tcp_read_buffer_init_size_bytes = atoi(value.data());
+				// _tcp_read_buffer_init_size_bytes = atoi(value.data());
+				_tcp_read_buffer_init_size_bytes = 1024 * convertToKB(value);
 				cout << "config : tcp-read-buffer-size-bytes" << " " << _tcp_read_buffer_init_size_bytes << endl;
 			}
 			else if(key == "tcp-write-buffer-init-size-bytes")
 			{
-				_tcp_write_buffer_init_size_bytes = atoi(value.data());
+				// _tcp_write_buffer_init_size_bytes = atoi(value.data());
+				_tcp_write_buffer_init_size_bytes = 1024 * convertToKB(value);
 				cout << "config : tcp-write-buffer-size-bytes" << " " << _tcp_write_buffer_init_size_bytes << endl;
 			}
 			else if(key == "tcp-read-buffer-max-size-bytes")
 			{
-				_tcp_read_buffer_max_size_bytes = atoi(value.data());
+				// _tcp_read_buffer_max_size_bytes = atoi(value.data());
+				_tcp_read_buffer_max_size_bytes = 1024 * convertToKB(value);
 				cout << "config : tcp-read-buffer-size-bytes" << " " << _tcp_read_buffer_max_size_bytes << endl;
 			}
 			else if(key == "tcp-write-buffer-max-size-bytes")
 			{
-				_tcp_write_buffer_max_size_bytes = atoi(value.data());
+				// _tcp_write_buffer_max_size_bytes = atoi(value.data());
+				_tcp_write_buffer_max_size_bytes = 1024 * convertToKB(value);
 				cout << "config : tcp-write-buffer-size-bytes" << " " << _tcp_write_buffer_max_size_bytes << endl;
 			}
 			else if(key == "log-file-name-prefix")
@@ -252,7 +323,6 @@ void TcpServer::loadConfig(const char * configFileName)
 	}
 	cout << "loading config done..." << endl;
 }
-
 
 int TcpServer::getListenningPort() const {
 	return _listenning_port;

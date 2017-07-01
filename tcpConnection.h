@@ -5,11 +5,13 @@
 #include "inetSockAddr.h"
 #include "buffer.h"
 #include "tcpServer.h"
+#include "worker.h"
 
 namespace yeyj
 {
 
 class TcpServer;
+class Worker;
 
 class TcpConnection : public enable_shared_from_this<TcpConnection>
 {
@@ -19,6 +21,7 @@ public:
 						   const int & connfd,
 						   const InetSockAddr & peerAddr,
 						   TcpServer * master,
+						   Worker * worker,
 						   int read_buffer_init_size,
 						   int read_buffer_max_size,
 						   int write_buffer_init_size,
@@ -70,6 +73,12 @@ public:
 			_epollEvent.events &= ~EPOLLOUT;
 	}
 
+	void log(const char * level, const string & msg);
+	// {
+	// 	_master->log(level, _worker->getTid(), _worker->getName(),
+	// 				_peerAddr.getIP(), _peerAddr.getPort(), msg);
+	// }
+
 private:
 
 	uint64_t 					_id;
@@ -81,6 +90,7 @@ private:
 	InetSockAddr 				_peerAddr;
 
 	TcpServer * 				_master;
+	Worker * 					_worker;
 
 	Buffer						_readBuffer;
 	Buffer 						_writeBuffer;

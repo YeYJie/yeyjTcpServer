@@ -65,6 +65,23 @@ public:
 	DisconnectionCallback 		disconnectionCallback;
 	MessageCallback 			messageCallback;
 
+	void log(const char * level, pthread_t threadID, const string & threadName,
+				uint32_t ip, uint16_t port, const string & msg)
+	{
+		_logger.append(format("%s %u %s %s %d.%d.%d.%d:%d %s",
+						level, threadID, threadName.data(),
+						_timeString.data(),
+						(ip & 0x000000FF),
+						(ip & 0x0000FF00) >> 8,
+						(ip & 0x00FF0000) >> 16,
+						(ip & 0xFF000000) >> 24,
+						port, msg.data()));
+	}
+
+	bool exceedMaxMemory() const {
+		return _exceedMaxMemory;
+	}
+
 private:
 
 	/*
@@ -73,50 +90,62 @@ private:
 	 * */
 	void newConnection(int connSock, InetSockAddr peerAddr);
 
+	void serverCron();
+
+	void updateTime();
+
+	void checkMaxMemory();
+
 	// Worker * findAWorker();
 
 	void loadConfig(const char * configFileName);
 
 private:
 
-	std::string 						_name;
+	bool 						_exceedMaxMemory = false;
 
-	Acceptor 							_acceptor;
+	string 						_timeString;
+
+	AsyncLogging 				_logger;
+
+	std::string 				_name;
+
+	pthread_t 					_tid = 0;
+
+	Acceptor 					_acceptor;
 
 	std::vector<Worker *> 		_threadPool;
 
 
 	LoadBalanceFunc				_loadBalance;
 
-	int _listenning_port;
+	int 						_listenning_port;
 
-	int _max_tcp;
+	int 						_max_tcp;
+	int 						_max_tcp_per_worker;
+	int 						_max_tcp_eviction_rule;
 
-	int _max_tcp_per_worker;
+	int 						_inactive_tcp_timeout;
+	int 						_inactive_tcp_eviction_rule;
 
-	int _max_tcp_eviction_rule;
+	int 						_max_vm_kb;
+	int 						_max_rss_kb;
 
-	int _inactive_tcp_timeout;
+	int 						_eviction_pool_size;
 
-	int _inactive_tcp_eviction_rule;
+	int 						_tcp_read_buffer_init_size_bytes;
+	int 						_tcp_read_buffer_max_size_bytes;
 
-	int _eviction_pool_size;
+	int 						_tcp_write_buffer_init_size_bytes;
+	int 						_tcp_write_buffer_max_size_bytes;
 
-	// int _load_balance;
+	string 						_log_file_name_prefix;
 
-	int _tcp_read_buffer_init_size_bytes;
-	int _tcp_read_buffer_max_size_bytes;
+	int 						_log_file_max_size;
 
-	int _tcp_write_buffer_init_size_bytes;
-	int _tcp_write_buffer_max_size_bytes;
+	int 						_log_flush_interval_second;
 
-	string _log_file_name_prefix;
-
-	int _log_file_max_size;
-
-	int _log_flush_interval_second;
-
-	int _log_high_watermask;
+	int 						_log_high_watermask;
 
 
 

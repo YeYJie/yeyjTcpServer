@@ -32,7 +32,7 @@ public:
 		return _addr.sin_addr.s_addr;
 	}
 
-	uint8_t getPort() {
+	uint16_t getPort() {
 		return _addr.sin_port;
 	}
 

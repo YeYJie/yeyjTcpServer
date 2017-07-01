@@ -5,6 +5,7 @@ TcpConnection::TcpConnection(uint64_t id,
 							 const int & connfd,
 							 const InetSockAddr & peerAddr,
 							 TcpServer * master,
+							 Worker * worker,
 							 int read_buffer_init_size,
 							 int read_buffer_max_size,
 							 int write_buffer_init_size,
@@ -13,6 +14,7 @@ TcpConnection::TcpConnection(uint64_t id,
 	_connfd(connfd),
 	_peerAddr(peerAddr),
 	_master(master),
+	_worker(worker),
 	_readBuffer(read_buffer_init_size, read_buffer_max_size),
 	_writeBuffer(write_buffer_init_size, write_buffer_max_size),
 	_close(false)
@@ -34,6 +36,12 @@ TcpConnection::TcpConnection(uint64_t id,
 
 	_lastActiveTime = getTimeInSecond();
 	// printf("TcpConnection::constructor\n");
+}
+
+void TcpConnection::log(const char * level, const string & msg)
+{
+	_master->log(level, _worker->getTid(), _worker->getName(),
+				_peerAddr.getIP(), _peerAddr.getPort(), msg);
 }
 
 TcpConnection::~TcpConnection()

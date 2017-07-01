@@ -24,6 +24,7 @@ class Acceptor
 public:
 
 	typedef std::function<void (int, const InetSockAddr &)> ConnectionCallback;
+	typedef std::function<void ()> ServerCron;
 
 	Acceptor() = default;
 
@@ -33,8 +34,10 @@ public:
 
 	void setConnectionCallback(const ConnectionCallback & cb);
 
+	void setServerCron(const ServerCron & sc);
+
 	/* once start, the acceptor will not stop */
-	void start();
+	void start(int timeout);
 
 private:
 
@@ -43,6 +46,7 @@ private:
 	int 				_epollfd;
 
 	ConnectionCallback 	_connectionCallback;
+	ServerCron 			_serverCron;
 };
 
 }

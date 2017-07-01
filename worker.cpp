@@ -85,7 +85,8 @@ void Worker::workFunction()
 
 		manageInactiveConnection();
 
-		if(_connectionPool.size() > _master->getMaxTcpConnectionPerWorker())
+		if(_connectionPool.size() > _master->getMaxTcpConnectionPerWorker()
+			|| _master->exceedMaxMemory())
 			eviction();
 	}
 }
@@ -158,8 +159,10 @@ void Worker::manageInactiveConnection()
 
 void Worker::evictRandomN(int n, bool force)
 {
+	if(n <= 0)
+		return;
 	int currentTime = getTimeInSecond();
-	uint64_t mostInactiveId = -1;
+	uint64_t mostInactiveId = 0xFFFFFFFFFFFFFFFF;
 	int mostInactiveTime = 0;
 	for(int i = 0; i < n; ++i)
 	{
@@ -174,7 +177,7 @@ void Worker::evictRandomN(int n, bool force)
 			mostInactiveId = conn->getId();
 		}
 	}
-	if(mostInactiveId >= 0
+	if(mostInactiveId != 0xFFFFFFFFFFFFFFFF
 		&& (force || mostInactiveTime > _master->getInactiveTcpTimeOut()))
 	{
 		printf("Worker::evictRandomN [%lld]\n", mostInactiveId);

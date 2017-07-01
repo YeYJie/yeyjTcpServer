@@ -13,6 +13,10 @@ Acceptor::Acceptor(const int & port) :
 	setsockopt(_listenfd, SOL_SOCKET, SO_REUSEADDR,
 			   &shit, sizeof(int));
 
+	int flags = fcntl(_listenfd, F_GETFL, 0);
+	assert(flags >= 0);
+	assert(fcntl(_listenfd, F_SETFL, flags | O_NONBLOCK) >= 0);
+
 	InetSockAddr serverAddr(AF_INET, INADDR_ANY, _port);
 
 	// assert(bind(_listenfd,
@@ -41,35 +45,50 @@ void Acceptor::setConnectionCallback(const ConnectionCallback & cb)
 	_connectionCallback = cb;
 }
 
+void Acceptor::setServerCron(const ServerCron & sc)
+{
+	_serverCron = sc;
+}
+
 Acceptor::~Acceptor()
 {
 
 }
 
-void Acceptor::start()
+void Acceptor::start(int timeout)
 {
 	cout << "acceptor start..." << endl;
 	/* should only be ran in the TcpServer main thread */
 	/* epoll wait and accept */
 	struct epoll_event events[1];
 	while(true) {
-		int nfds = epoll_wait(_epollfd, events, 1, -1);
+		int nfds = epoll_wait(_epollfd, events, 1, timeout);
 
-		/* once epoll_wait return, nfds should be 1 */
-		assert(nfds == 1);
-		assert(events[0].data.fd == _listenfd);
+		// assert(nfds == 1);
+		// assert(events[0].data.fd == _listenfd);
 
-		int ret = 0;
-		while(true) { // edge-trigger
-			sockaddr_in clientAddr;
-			unsigned int clientAddrLen = sizeof(clientAddr);
-			int ret = accept(_listenfd,
-								(struct sockaddr *)&clientAddr,
-								&clientAddrLen);
-			if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-				break;
-			assert(ret >= 0);
-			_connectionCallback(ret, InetSockAddr(clientAddr));
+		if(nfds == 1)
+		{
+			int ret = 0;
+			while(true) { // edge-trigger
+				sockaddr_in clientAddr;
+				unsigned int clientAddrLen = sizeof(clientAddr);
+				int ret = accept(_listenfd,
+									(struct sockaddr *)&clientAddr,
+									&clientAddrLen);
+				if(ret < 0) {
+					if(errno == EAGAIN || errno == EWOULDBLOCK
+						|| errno == ECONNABORTED || errno == EPROTO
+						|| errno == EINTR)
+						break;
+					else
+						cout << "Acceptor::start ret < 0" << endl;
+				}
+				assert(ret >= 0);
+				_connectionCallback(ret, InetSockAddr(clientAddr));
+			}
 		}
+
+		_serverCron();
 	}
 }

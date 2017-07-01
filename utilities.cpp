@@ -78,7 +78,7 @@ std::string format(const char *fmt, ...)
 	return fs;
 }
 
-
+// both returned value are of KB
 void process_mem_usage(double & vm_usage, double & resident_set)
 {
 	using std::ios_base;
@@ -104,11 +104,12 @@ void process_mem_usage(double & vm_usage, double & resident_set)
 	stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
 				>> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
 				>> utime >> stime >> cutime >> cstime >> priority >> nice
-				>> O >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
+				>> O >> itrealvalue >> starttime >> vsize >> rss;
 
 	stat_stream.close();
 
-	long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+	// in case x86-64 is configured to use 2MB pages
+	long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
 	vm_usage	= vsize / 1024.0;
 	resident_set = rss * page_size_kb;
 }

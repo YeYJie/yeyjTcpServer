@@ -55,4 +55,10 @@ std::string format(const char *fmt, ...);
 // On failure, returns 0.0, 0.0
 void process_mem_usage(double & vm_usage, double & resident_set);
 
+#define LOG_DEBUG 	"DEBUG"
+#define LOG_ERROR 	"ERROR"
+#define LOG_INFO 	"INFO"
+#define LOG_TRACE 	"TRACE"
+#define LOG_WARN 	"WARN"
+
 #endif
