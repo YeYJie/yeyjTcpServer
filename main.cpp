@@ -7,12 +7,12 @@ using namespace std;
 void onConnection(const TcpConnectionPtr & conn)
 {
 	// totalConnection++;
-	// cout << "new connection : " << conn->getId() << endl;
+	cout << "new connection : " << conn->getId() << endl;
 }
 
 void onMessage(const TcpConnectionPtr & conn)
 {
-	conn->sendRaw(conn->receiveMessageAsString());
+	conn->sendRaw(conn->receiveRawAsString());
 
 	// string message = conn->receiveRawAsString();
 	// // conn->send(message);
@@ -32,7 +32,7 @@ void onMessage(const TcpConnectionPtr & conn)
 void onDisconnection(const TcpConnectionPtr & conn)
 {
 	// totalConnection--;
-	// cout << "disconnection : " << conn->getId() << endl;
+	cout << "disconnection : " << conn->getId() << endl;
 }
 
 int main()

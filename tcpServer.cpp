@@ -38,31 +38,21 @@ void TcpServer::setMessageCallback(const MessageCallback & cb)
 	messageCallback = cb;
 }
 
-/*
- * 	find a worker to work on the new connection
- * 	consideration of work balance
- * */
-// Worker * TcpServer::findAWorker()
-// {
-// 	/* round-robin... */
-// 	static int index = 0;
-// 	return _threadPool[(index++) % _threadPool.size()];
-// }
 
-Worker * TcpServer::loadBalanceRoundRobin()
+Worker * TcpServer::loadBalanceRoundRobin(uint32_t ip)
 {
 	static int index = 0;
 	return _threadPool[(index++) % _threadPool.size()];
 }
 
-Worker * TcpServer::loadBalanceRandom()
+Worker * TcpServer::loadBalanceRandom(uint32_t ip)
 {
 	int index = rand() % _threadPool.size();
 	// cout << "loadBalanceRandom : " << index << endl;
 	return _threadPool[index];
 }
 
-Worker * TcpServer::loadBalanceMinConnection()
+Worker * TcpServer::loadBalanceMinConnection(uint32_t ip)
 {
 	int index = 0;
 	int connections = _threadPool[0]->getConnectionNum();
@@ -75,17 +65,23 @@ Worker * TcpServer::loadBalanceMinConnection()
 	return _threadPool[index];
 }
 
+Worker * TcpServer::loadBalanceIPHash(uint32_t ip)
+{
+	static auto hashFunction = std::hash<uint32_t>();
+	return _threadPool[hashFunction(ip) % _threadPool.size()];
+}
+
 void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 {
 	// YEYJ_LOG("TcpServer::newConnection [%s] [%d]\n",
 	// 		 peerAddr.getIpAsChar(),
 	// 		 peerAddr.getPort());
 
-	printf("TcpServer::newConnection [%s] [%d]\n",
-			peerAddr.getIpAsChar(),
-			peerAddr.getPort());
+	// printf("TcpServer::newConnection [%s] [%d]\n",
+	// 		peerAddr.getIpAsChar(),
+	// 		peerAddr.getPort());
 
-	Worker * worker = _loadBalance();
+	Worker * worker = _loadBalance(peerAddr.getIP());
 
 	static uint64_t id = 0;
 
@@ -200,13 +196,15 @@ void TcpServer::loadConfig(const char * configFileName)
 			else if(key == "load-balance")
 			{
 				if(value == "round-robin")
-					_loadBalance = std::bind(&TcpServer::loadBalanceRoundRobin, this);
+					_loadBalance = std::bind(&TcpServer::loadBalanceRoundRobin, this, std::placeholders::_1);
 					// _load_balance = LOAD_BALANCE_ROUNDROBIN;
 				else if(value == "random")
-					_loadBalance = std::bind(&TcpServer::loadBalanceRandom, this);
+					_loadBalance = std::bind(&TcpServer::loadBalanceRandom, this, std::placeholders::_1);
 					// _load_balance = LOAD_BALANCE_RANDOM;
-				else if(value == "minConnection")
-					_loadBalance = std::bind(&TcpServer::loadBalanceMinConnection, this);
+				else if(value == "min-connection")
+					_loadBalance = std::bind(&TcpServer::loadBalanceMinConnection, this, std::placeholders::_1);
+				else if(value == "ip-hash")
+					_loadBalance = std::bind(&TcpServer::loadBalanceIPHash, this, std::placeholders::_1);
 					// _load_balance = LOAD_BALANCE_MINCONNECTION;
 				cout << "config : load-balance" << " " << value << endl;
 			}

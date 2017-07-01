@@ -28,11 +28,11 @@ public:
 		return _addr.sin_family;
 	}
 
-	int getIP() {
+	uint32_t getIP() {
 		return _addr.sin_addr.s_addr;
 	}
 
-	int getPort() {
+	uint8_t getPort() {
 		return _addr.sin_port;
 	}
 

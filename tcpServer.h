@@ -37,7 +37,7 @@ public:
 
 	~TcpServer();
 
-	typedef std::function<Worker*()> LoadBalanceFunc;
+	typedef std::function<Worker*(uint32_t)> LoadBalanceFunc;
 
 	/*
 	 *	runs the tcpserver with 'n' worker threads
@@ -140,9 +140,10 @@ public: // getter
 
 private: // load balance functions
 
-	Worker * loadBalanceRoundRobin();
-	Worker * loadBalanceRandom();
-	Worker * loadBalanceMinConnection();
+	Worker * loadBalanceRoundRobin(uint32_t ip);
+	Worker * loadBalanceRandom(uint32_t ip);
+	Worker * loadBalanceMinConnection(uint32_t ip);
+	Worker * loadBalanceIPHash(uint32_t ip);
 };
 
 }
