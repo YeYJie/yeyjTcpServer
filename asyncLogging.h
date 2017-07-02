@@ -10,6 +10,11 @@
 namespace  yeyj
 {
 
+#define LOG_FILE_ROLLING_NONE 0
+#define LOG_FILE_ROLLING_SIZE 1
+#define LOG_FILE_ROLLING_DAILY 2
+#define LOG_FILE_ROLLING_SIZEDAILY 3
+
 class AsyncLogging
 {
 public:
@@ -23,26 +28,20 @@ public:
 
 	void stop();
 
-	/*
-	 * flush the buffed logs to disk every 'second' seconds
-	 * */
-	void setFlushInterval(const int & second);
-
-	/*
-	 * when the numbers of the buffered logs exceed 'highWaterMask'
-	 * then flush then to disk
-	 * */
-	void setHighWaterMask(const int & highWaterMask);
-
 	void setName(const std::string & newName);
 
-	// void setFormatString(const char * formatString) {
-	// 	_formatString = formatString;
-	// }
+	void setFlushInterval(const int & second);
+	void setHighWaterMask(const int & highWaterMask);
+
+	void setRolling(int rollingRule);
+	void setLogFileMaxSize(int bytes);
+
 
 private:
 
 	void threadFunction();
+
+	std::string getNextLogFileName();
 
 private:
 
@@ -53,6 +52,11 @@ private:
 	int 				_flushInterval;
 	int 				_highWaterMask;
 
+	int 				_rollingRule;
+	int 				_maxSizeBytes;
+	int 				_accumulateBytes;
+	std::string 		_currentDate;
+
 	yeyj::Thread 		_thread;
 	bool 				_running;
 
@@ -62,30 +66,9 @@ private:
 	Buffer 				_currentBuffer;
 	Buffer 				_nextBuffer;
 
-	// default log string format :
-	// 		%level %threadID %threadName %dateTime %ipPort %msg
-	// const char *		_formatString = "%s %d %s %s %d.%d.%d.%d:%d %s";
-
 };
 
 }
 
-// /* declared at 'AsyncLogging.cpp' */
-// extern yeyj::AsyncLogging yeyjGlobalLogger;
-
-// #define setGlobalLoggerName(newName)	yeyjGlobalLogger.setName(newName)
-// #define startGlobalLogging()			yeyjGlobalLogger.start()
-// #define stopGlobalLogging()				yeyjGlobalLogger.stop()
-// #define setGlobalLoggerFlushInterval(f) \
-// 	yeyjGlobalLogger.setFlushInterval(f)
-// #define setGlobalLoggerHighWaterMask(h)	\
-// 	yeyjGlobalLogger.setHighWaterMask(h)
-
-// #define YEYJ_LOG_FORMAT_CONCAT(a, b) a b
-
-// #define YEYJ_LOG(format, args...) 										\
-// 	char yeyj_log_buffer[100];											\
-// 	int yeyj_log_len = snprintf(yeyj_log_buffer, 100, YEYJ_LOG_FORMAT_CONCAT("%s %d  ", format), __FILE__, __LINE__, ## args); \
-// 	yeyjGlobalLogger.append(string(yeyj_log_buffer, yeyj_log_len)); 		\
 
 #endif

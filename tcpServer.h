@@ -109,7 +109,6 @@ private:
 	AsyncLogging 				_logger;
 
 	std::string 				_name;
-
 	pthread_t 					_tid = 0;
 
 	Acceptor 					_acceptor;
@@ -140,13 +139,10 @@ private:
 	int 						_tcp_write_buffer_max_size_bytes;
 
 	string 						_log_file_name_prefix;
-
-	int 						_log_file_max_size;
-
 	int 						_log_flush_interval_second;
-
 	int 						_log_high_watermask;
-
+	int 						_log_file_rolling;
+	int 						_log_file_max_size_bytes;
 
 
 public: // getter

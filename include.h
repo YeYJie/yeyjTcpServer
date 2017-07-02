@@ -47,6 +47,7 @@ string & trim(string &s);
 vector<string> split(const string & s, const string & delimiters);
 
 std::string format(const char *fmt, ...);
+std::string getDateAsString();
 
 // process_mem_usage(double &, double &) - takes two doubles by reference,
 // attempts to read the system-dependent data for a process' virtual memory

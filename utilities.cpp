@@ -78,6 +78,16 @@ std::string format(const char *fmt, ...)
 	return fs;
 }
 
+std::string getDateAsString()
+{
+	time_t t = time(0);
+	struct tm * now = localtime(&t);
+	string res = format("%4d/%02d/%02d", now->tm_year + 1900,
+				now->tm_mon + 1, now->tm_mday);
+	// cout << res << endl;
+	return res;
+}
+
 // both returned value are of KB
 void process_mem_usage(double & vm_usage, double & resident_set)
 {

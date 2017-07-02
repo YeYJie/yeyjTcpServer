@@ -11,6 +11,10 @@ TcpServer::TcpServer(int port) : _acceptor(port), _name("master")
 	updateTime();
 
 	_logger.setName(_log_file_name_prefix);
+	_logger.setFlushInterval(_log_flush_interval_second);
+	_logger.setHighWaterMask(_log_high_watermask);
+	_logger.setRolling(_log_file_rolling);
+	_logger.setLogFileMaxSize(_log_file_max_size_bytes);
 	_logger.start();
 
 	_tid = pthread_self();
@@ -111,7 +115,7 @@ void TcpServer::checkMaxMemory()
 	double vm_usage = 0, resident_set = 0;
 	process_mem_usage(vm_usage, resident_set);
 	// cout << "TcpServer::checkMaxMemory " << vm_usage << " " << resident_set
-		<< " " << _max_vm_kb << " " << _max_rss_kb << endl;
+		// << " " << _max_vm_kb << " " << _max_rss_kb << endl;
 	if(vm_usage > _max_vm_kb || resident_set > _max_rss_kb) {
 		_exceedMaxMemory = true;
 		// cout << "TcpServer::checkMaxMemory _exceedMaxMemory = true" << endl;
@@ -304,10 +308,23 @@ void TcpServer::loadConfig(const char * configFileName)
 				_log_file_name_prefix = value;
 				cout << "config : log-file-name-prefix" << " " << _log_file_name_prefix << endl;
 			}
+			else if(key == "log-file-rolling")
+			{
+				if(value == "none")
+					_log_file_rolling = LOG_FILE_ROLLING_NONE;
+				else if(value == "size")
+					_log_file_rolling = LOG_FILE_ROLLING_SIZE;
+				else if(value == "daily")
+					_log_file_rolling = LOG_FILE_ROLLING_DAILY;
+				else if(value == "size & daily")
+					_log_file_rolling = LOG_FILE_ROLLING_SIZEDAILY;
+				cout << "config : log-file-rolling " << _log_file_rolling << endl;
+			}
 			else if(key == "log-file-max-size")
 			{
-				_log_file_max_size = atoi(value.data());
-				cout << "config : log-file-max-size" << " " << _log_file_max_size << endl;
+				// _log_file_max_size_bytes = atoi(value.data());
+				_log_file_max_size_bytes = 1024 * convertToKB(value);
+				cout << "config : log-file-max-size" << " " << _log_file_max_size_bytes << endl;
 			}
 			else if(key == "log-flush-interval-second")
 			{
@@ -324,13 +341,13 @@ void TcpServer::loadConfig(const char * configFileName)
 	cout << "loading config done..." << endl;
 }
 
-int TcpServer::getListenningPort() const {
-	return _listenning_port;
-}
+// int TcpServer::getListenningPort() const {
+// 	return _listenning_port;
+// }
 
-int TcpServer::getMaxTcpConnection() const {
-	return _max_tcp;
-}
+// int TcpServer::getMaxTcpConnection() const {
+// 	return _max_tcp;
+// }
 
 int TcpServer::getMaxTcpConnectionPerWorker() const {
 	return _max_tcp_per_worker;
@@ -352,34 +369,34 @@ int TcpServer::getEvictionPoolSize() const {
 	return _eviction_pool_size;
 }
 
-int TcpServer::getReadBufferInitSize() const {
-	return _tcp_read_buffer_init_size_bytes;
-}
+// int TcpServer::getReadBufferInitSize() const {
+// 	return _tcp_read_buffer_init_size_bytes;
+// }
 
-int TcpServer::getReadBufferMaxSize() const {
-	return _tcp_read_buffer_max_size_bytes;
-}
+// int TcpServer::getReadBufferMaxSize() const {
+// 	return _tcp_read_buffer_max_size_bytes;
+// }
 
-int TcpServer::getWriteBufferInitSize() const {
-	return _tcp_write_buffer_init_size_bytes;
-}
+// int TcpServer::getWriteBufferInitSize() const {
+// 	return _tcp_write_buffer_init_size_bytes;
+// }
 
-int TcpServer::getWriteBufferMaxSize() const {
-	return _tcp_write_buffer_max_size_bytes;
-}
+// int TcpServer::getWriteBufferMaxSize() const {
+// 	return _tcp_write_buffer_max_size_bytes;
+// }
 
-string TcpServer::getLogFileNamePrefix() const {
-	return _log_file_name_prefix;
-}
+// string TcpServer::getLogFileNamePrefix() const {
+// 	return _log_file_name_prefix;
+// }
 
-int TcpServer::getLogFileNameSize() const {
-	return _log_file_max_size;
-}
+// int TcpServer::getLogFileNameSize() const {
+// 	return _log_file_max_size_bytes;
+// }
 
-int TcpServer::getLogFlushInterval() const {
-	return _log_flush_interval_second;
-}
+// int TcpServer::getLogFlushInterval() const {
+// 	return _log_flush_interval_second;
+// }
 
-int TcpServer::getLogHighWaterMask() const {
-	return _log_high_watermask;
-}
+// int TcpServer::getLogHighWaterMask() const {
+// 	return _log_high_watermask;
+// }

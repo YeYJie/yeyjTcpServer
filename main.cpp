@@ -8,12 +8,15 @@ void onConnection(const TcpConnectionPtr & conn)
 {
 	// totalConnection++;
 	cout << "new connection : " << conn->getId() << endl;
-	conn->log(LOG_DEBUG, "yeyongjie");
+	// conn->log(LOG_DEBUG, "yeyongjie");
 }
 
 void onMessage(const TcpConnectionPtr & conn)
 {
-	conn->sendRaw(conn->receiveRawAsString());
+	// conn->sendRaw(conn->receiveRawAsString());
+	string temp = conn->receiveRawAsString();
+	conn->log(LOG_DEBUG, temp);
+	conn->sendRaw(temp);
 
 	// string message = conn->receiveRawAsString();
 	// // conn->send(message);

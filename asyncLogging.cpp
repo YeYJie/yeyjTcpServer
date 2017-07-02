@@ -4,8 +4,6 @@
 
 using namespace yeyj;
 
-// AsyncLogging yeyjGlobalLogger;
-
 AsyncLogging::AsyncLogging(const string & logfilename,
 						   const int & flushInterval,
 						   const int & highWaterMask) :
@@ -15,7 +13,9 @@ AsyncLogging::AsyncLogging(const string & logfilename,
 	_thread(std::bind(&AsyncLogging::threadFunction, this), "Log"),
 	_running(false),
 	_mutex(),
-	_cond(_mutex)
+	_cond(_mutex),
+	_accumulateBytes(0),
+	_currentDate(std::move(getDateAsString()))
 {
 }
 
@@ -23,12 +23,10 @@ void AsyncLogging::start()
 {
 	_running = true;
 	_thread.start();
-	// YEYJ_LOG("Start Logging\n");
 }
 
 void AsyncLogging::stop()
 {
-	// YEYJ_LOG("Stop Logging\n");
 	_cond.notifyAll();
 	_running = false;
 	_thread.join();
@@ -40,10 +38,13 @@ void AsyncLogging::append(const string & logline)
 
 	MutexLockGuard lock(_mutex);
 	_currentBuffer.push_back(logline);
+	_accumulateBytes += logline.size();
 
 	// cout << "AsyncLogging::append " << logline << endl;
 
-	if(_currentBuffer.size() >= _highWaterMask){
+	if(_currentBuffer.size() >= _highWaterMask
+		|| _accumulateBytes > _maxSizeBytes)
+	{
 		// printf("AsyncLogging::append %d\n", _currentBuffer.size());
 		_cond.notify();
 	}
@@ -51,13 +52,11 @@ void AsyncLogging::append(const string & logline)
 
 void AsyncLogging::setFlushInterval(const int & second)
 {
-	// printf("AsyncLogging::setFlushInterval [%d]\n", second);
 	_flushInterval = second;
 }
 
 void AsyncLogging::setHighWaterMask(const int & highWaterMask)
 {
-	// printf("AsyncLogging::setHighWaterMask [%d]\n", highWaterMask);
 	_highWaterMask = highWaterMask;
 }
 
@@ -66,6 +65,15 @@ void AsyncLogging::setName(const std::string & newName)
 	_logfilename = newName;
 }
 
+void AsyncLogging::setRolling(int rollingRule)
+{
+	_rollingRule = rollingRule;
+}
+
+void AsyncLogging::setLogFileMaxSize(int bytes)
+{
+	_maxSizeBytes = bytes;
+}
 
 /* *
  * 		LogFile begin
@@ -83,7 +91,14 @@ public:
 	}
 
 	~LogFile() {
-		fclose(_file);
+		if(_file)
+			fclose(_file);
+	}
+
+	LogFile & operator=(const string & name) {
+		if(_file)
+			fclose(_file);
+		_file = fopen(name.data(), "a");
 	}
 
 	void write(const string & line) {
@@ -102,7 +117,7 @@ public:
 	}
 
 private:
-	FILE * 		_file;
+	FILE * 		_file = nullptr;
 };
 
 /*
@@ -110,9 +125,15 @@ private:
  * */
 
 
+std::string AsyncLogging::getNextLogFileName()
+{
+	static int suffix = 0;
+	return _logfilename + format("_%d", suffix++);
+}
+
 void AsyncLogging::threadFunction()
 {
-	LogFile logfile(_logfilename);
+	LogFile logfile(getNextLogFileName());
 	while(_running) {
 		{
 			MutexLockGuard lock(_mutex);
@@ -130,6 +151,34 @@ void AsyncLogging::threadFunction()
 			logfile.writeLine(_nextBuffer[i]);
 		logfile.flush();
 		_nextBuffer.clear();
+
+		if(_rollingRule != LOG_FILE_ROLLING_NONE)
+		{
+			if(_rollingRule == LOG_FILE_ROLLING_SIZE
+				&& _accumulateBytes > _maxSizeBytes)
+			{
+				{
+					MutexLockGuard lock(_mutex);
+					_accumulateBytes = 0;
+				}
+				logfile = getNextLogFileName();
+			}
+			else if(_rollingRule == LOG_FILE_ROLLING_DAILY
+				&& getDateAsString() != _currentDate)
+			{
+				logfile = getNextLogFileName();
+			}
+			else if(_rollingRule == LOG_FILE_ROLLING_SIZEDAILY
+				&& ( _accumulateBytes > _maxSizeBytes
+					|| getDateAsString() != _currentDate))
+			{
+				{
+					MutexLockGuard lock(_mutex);
+					_accumulateBytes = 0;
+				}
+				logfile = getNextLogFileName();
+			}
+		}
 	}
 	if(!_currentBuffer.empty()) {
 		for(const string & s : _currentBuffer)
