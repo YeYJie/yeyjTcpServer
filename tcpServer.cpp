@@ -18,7 +18,6 @@ TcpServer::TcpServer(int port) : _acceptor(port), _name("master")
 	_logger.start();
 
 	_tid = pthread_self();
-	// cout << _tid << endl;
 
 	_acceptor.setConnectionCallback(
 		std::bind(&TcpServer::newConnection,
@@ -30,7 +29,6 @@ TcpServer::TcpServer(int port) : _acceptor(port), _name("master")
 
 TcpServer::~TcpServer()
 {
-	// stopGlobalLogging();
 }
 
 void TcpServer::setConnectionCallback(const ConnectionCallback & cb)
@@ -58,7 +56,7 @@ Worker * TcpServer::loadBalanceRoundRobin(uint32_t ip)
 Worker * TcpServer::loadBalanceRandom(uint32_t ip)
 {
 	int index = rand() % _threadPool.size();
-	// cout << "loadBalanceRandom : " << index << endl;
+	// std::cout << "loadBalanceRandom : " << index << std::endl;
 	return _threadPool[index];
 }
 
@@ -93,7 +91,7 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 	static uint64_t id = 0;
 
 	worker->registerNewConnection(
-		make_shared<TcpConnection>(++id, connSock, peerAddr,
+		std::make_shared<TcpConnection>(++id, connSock, peerAddr,
 									this,
 									worker,
 									_tcp_read_buffer_init_size_bytes,
@@ -105,7 +103,7 @@ void TcpServer::newConnection(int connSock, InetSockAddr peerAddr)
 
 void TcpServer::serverCron()
 {
-	// cout << "TcpServer::serverCron" << endl;
+	// std::cout << "TcpServer::serverCron" << std::endl;
 	updateTime();
 	checkMaxMemory();
 }
@@ -114,11 +112,11 @@ void TcpServer::checkMaxMemory()
 {
 	double vm_usage = 0, resident_set = 0;
 	process_mem_usage(vm_usage, resident_set);
-	// cout << "TcpServer::checkMaxMemory " << vm_usage << " " << resident_set
-		// << " " << _max_vm_kb << " " << _max_rss_kb << endl;
+	// std::cout << "TcpServer::checkMaxMemory " << vm_usage << " " << resident_set
+		// << " " << _max_vm_kb << " " << _max_rss_kb << std::endl;
 	if(vm_usage > _max_vm_kb || resident_set > _max_rss_kb) {
 		_exceedMaxMemory = true;
-		// cout << "TcpServer::checkMaxMemory _exceedMaxMemory = true" << endl;
+		// std::cout << "TcpServer::checkMaxMemory _exceedMaxMemory = true" << std::endl;
 	}
 	else
 		_exceedMaxMemory = false;
@@ -137,7 +135,7 @@ void TcpServer::updateTime()
                        timeinfo->tm_mday, timeinfo->tm_hour,
                        timeinfo->tm_min, timeinfo->tm_sec);
     timeBuffer[19] = '\0';
-    string temp(timeBuffer);
+    std::string temp(timeBuffer);
     _timeString.swap(temp);
 }
 
@@ -146,7 +144,7 @@ void TcpServer::updateTime()
  * */
 void TcpServer::start(const int & n)
 {
-	int maxConnection = min(_max_tcp_per_worker, _max_tcp / n);
+	int maxConnection = std::min(_max_tcp_per_worker, _max_tcp / n);
 	// for epoll, maxevents must be greater than 0
 	if(maxConnection <= 0)
 		maxConnection = 1;
@@ -169,7 +167,7 @@ void TcpServer::stop()
 		_threadPool[i]->stop();
 }
 
-static int convertToKB(string & value)
+static int convertToKB(std::string & value)
 {
 	char c = value.back();
 	int factor = 0;
@@ -185,12 +183,12 @@ static int convertToKB(string & value)
 
 void TcpServer::loadConfig(const char * configFileName)
 {
-	cout << "loading config : " << configFileName << endl;
+	std::cout << "loading config : " << configFileName << std::endl;
 
-	ifstream configFile(configFileName, ios::in);
+	std::ifstream configFile(configFileName, std::ios::in);
 	if(configFile.is_open())
 	{
-		string line = "";
+		std::string line = "";
 		while(true) {
 			if(configFile.eof())
 				break;
@@ -201,28 +199,28 @@ void TcpServer::loadConfig(const char * configFileName)
 			if(line[0] == '#')
 				continue;
 
-			vector<string> currentLine = split(line, "=");
+			std::vector<std::string> currentLine = split(line, "=");
 			if(currentLine.size() != 2)
 				break;
 
-			string key = trim(currentLine[0]);
-			string value = trim(currentLine[1]);
+			std::string key = trim(currentLine[0]);
+			std::string value = trim(currentLine[1]);
 
 
 			if(key == "listening-port")
 			{
 				_listenning_port = atoi(value.data());
-				cout << "config : listening-port " << _listenning_port << endl;
+				std::cout << "config : listening-port " << _listenning_port << std::endl;
 			}
 			else if(key == "max-tcp")
 			{
 				_max_tcp = atoi(value.data());
-				cout << "config : max-tcp" << " " << _max_tcp << endl;
+				std::cout << "config : max-tcp" << " " << _max_tcp << std::endl;
 			}
 			else if(key == "max-tcp-per-worker")
 			{
 				_max_tcp_per_worker = atoi(value.data());
-				cout << "config : max-tcp-per-worker" << " " << _max_tcp_per_worker << endl;
+				std::cout << "config : max-tcp-per-worker" << " " << _max_tcp_per_worker << std::endl;
 			}
 			else if(key == "max-tcp-eviction-rule")
 			{
@@ -232,12 +230,12 @@ void TcpServer::loadConfig(const char * configFileName)
 					_max_tcp_eviction_rule = MAX_TCP_EVICTION_RANDOM;
 				else if(value == "inactive")
 					_max_tcp_eviction_rule = MAX_TCP_EVICTION_INACTIVE;
-				cout << "config : max-tcp-eviction-rule" << " " << value << endl;
+				std::cout << "config : max-tcp-eviction-rule" << " " << value << std::endl;
 			}
 			else if(key == "inactive-tcp-timeout")
 			{
 				_inactive_tcp_timeout = atoi(value.data());
-				cout << "config : inactive-tcp-timeout" << " " << _inactive_tcp_timeout << endl;
+				std::cout << "config : inactive-tcp-timeout" << " " << _inactive_tcp_timeout << std::endl;
 			}
 			else if(key == "inactive-tcp-eviction-rule")
 			{
@@ -245,24 +243,24 @@ void TcpServer::loadConfig(const char * configFileName)
 					_inactive_tcp_eviction_rule = INACTIVE_TCP_EVICTION_NONE;
 				else if(value == "close")
 					_inactive_tcp_eviction_rule = INACTIVE_TCP_EVICTION_CLOSE;
-				cout << "config : inactive-tcp-eviction-rule" << " " << value << endl;
+				std::cout << "config : inactive-tcp-eviction-rule" << " " << value << std::endl;
 			}
 
 			else if(key == "max-vm-memory")
 			{
 				_max_vm_kb = convertToKB(value);
-				cout << "config : max-vm-memory " << _max_vm_kb << endl;
+				std::cout << "config : max-vm-memory " << _max_vm_kb << std::endl;
 			}
 			else if(key == "max-rss")
 			{
 				_max_rss_kb = convertToKB(value);
-				cout << "config : max-rss " << _max_rss_kb << endl;
+				std::cout << "config : max-rss " << _max_rss_kb << std::endl;
 			}
 
 			else if(key == "eviction-pool-size")
 			{
 				_eviction_pool_size = atoi(value.data());
-				cout << "config : eviction-pool-size" << " " << value << endl;
+				std::cout << "config : eviction-pool-size" << " " << value << std::endl;
 			}
 			else if(key == "load-balance")
 			{
@@ -277,36 +275,36 @@ void TcpServer::loadConfig(const char * configFileName)
 				else if(value == "ip-hash")
 					_loadBalance = std::bind(&TcpServer::loadBalanceIPHash, this, std::placeholders::_1);
 					// _load_balance = LOAD_BALANCE_MINCONNECTION;
-				cout << "config : load-balance" << " " << value << endl;
+				std::cout << "config : load-balance" << " " << value << std::endl;
 			}
 			else if(key == "tcp-read-buffer-init-size-bytes")
 			{
 				// _tcp_read_buffer_init_size_bytes = atoi(value.data());
 				_tcp_read_buffer_init_size_bytes = 1024 * convertToKB(value);
-				cout << "config : tcp-read-buffer-size-bytes" << " " << _tcp_read_buffer_init_size_bytes << endl;
+				std::cout << "config : tcp-read-buffer-size-bytes" << " " << _tcp_read_buffer_init_size_bytes << std::endl;
 			}
 			else if(key == "tcp-write-buffer-init-size-bytes")
 			{
 				// _tcp_write_buffer_init_size_bytes = atoi(value.data());
 				_tcp_write_buffer_init_size_bytes = 1024 * convertToKB(value);
-				cout << "config : tcp-write-buffer-size-bytes" << " " << _tcp_write_buffer_init_size_bytes << endl;
+				std::cout << "config : tcp-write-buffer-size-bytes" << " " << _tcp_write_buffer_init_size_bytes << std::endl;
 			}
 			else if(key == "tcp-read-buffer-max-size-bytes")
 			{
 				// _tcp_read_buffer_max_size_bytes = atoi(value.data());
 				_tcp_read_buffer_max_size_bytes = 1024 * convertToKB(value);
-				cout << "config : tcp-read-buffer-size-bytes" << " " << _tcp_read_buffer_max_size_bytes << endl;
+				std::cout << "config : tcp-read-buffer-size-bytes" << " " << _tcp_read_buffer_max_size_bytes << std::endl;
 			}
 			else if(key == "tcp-write-buffer-max-size-bytes")
 			{
 				// _tcp_write_buffer_max_size_bytes = atoi(value.data());
 				_tcp_write_buffer_max_size_bytes = 1024 * convertToKB(value);
-				cout << "config : tcp-write-buffer-size-bytes" << " " << _tcp_write_buffer_max_size_bytes << endl;
+				std::cout << "config : tcp-write-buffer-size-bytes" << " " << _tcp_write_buffer_max_size_bytes << std::endl;
 			}
 			else if(key == "log-file-name-prefix")
 			{
 				_log_file_name_prefix = value;
-				cout << "config : log-file-name-prefix" << " " << _log_file_name_prefix << endl;
+				std::cout << "config : log-file-name-prefix" << " " << _log_file_name_prefix << std::endl;
 			}
 			else if(key == "log-file-rolling")
 			{
@@ -318,36 +316,29 @@ void TcpServer::loadConfig(const char * configFileName)
 					_log_file_rolling = LOG_FILE_ROLLING_DAILY;
 				else if(value == "size & daily")
 					_log_file_rolling = LOG_FILE_ROLLING_SIZEDAILY;
-				cout << "config : log-file-rolling " << _log_file_rolling << endl;
+				std::cout << "config : log-file-rolling " << _log_file_rolling << std::endl;
 			}
 			else if(key == "log-file-max-size")
 			{
 				// _log_file_max_size_bytes = atoi(value.data());
 				_log_file_max_size_bytes = 1024 * convertToKB(value);
-				cout << "config : log-file-max-size" << " " << _log_file_max_size_bytes << endl;
+				std::cout << "config : log-file-max-size" << " " << _log_file_max_size_bytes << std::endl;
 			}
 			else if(key == "log-flush-interval-second")
 			{
 				_log_flush_interval_second = atoi(value.data());
-				cout << "config : log-flush-interval-second" << " " << _log_flush_interval_second << endl;
+				std::cout << "config : log-flush-interval-second" << " " << _log_flush_interval_second << std::endl;
 			}
 			else if(key == "log-high-watermask")
 			{
 				_log_high_watermask = atoi(value.data());
-				cout << "config : log-high-watermask" << " " << _log_high_watermask << endl;
+				std::cout << "config : log-high-watermask" << " " << _log_high_watermask << std::endl;
 			}
 		}
 	}
-	cout << "loading config done..." << endl;
+	std::cout << "loading config done..." << std::endl;
 }
 
-// int TcpServer::getListenningPort() const {
-// 	return _listenning_port;
-// }
-
-// int TcpServer::getMaxTcpConnection() const {
-// 	return _max_tcp;
-// }
 
 int TcpServer::getMaxTcpConnectionPerWorker() const {
 	return _max_tcp_per_worker;
@@ -369,34 +360,21 @@ int TcpServer::getEvictionPoolSize() const {
 	return _eviction_pool_size;
 }
 
-// int TcpServer::getReadBufferInitSize() const {
-// 	return _tcp_read_buffer_init_size_bytes;
-// }
+void TcpServer::log(const char * level, pthread_t threadID,
+					const std::string & threadName,
+					uint32_t ip, uint16_t port, const std::string & msg)
+{
+	_logger.append(format("%s %u %s %s %d.%d.%d.%d:%d %s",
+					level, threadID, threadName.data(),
+					_timeString.data(),
+					(ip & 0x000000FF),
+					(ip & 0x0000FF00) >> 8,
+					(ip & 0x00FF0000) >> 16,
+					(ip & 0xFF000000) >> 24,
+					port, msg.data()));
+}
 
-// int TcpServer::getReadBufferMaxSize() const {
-// 	return _tcp_read_buffer_max_size_bytes;
-// }
-
-// int TcpServer::getWriteBufferInitSize() const {
-// 	return _tcp_write_buffer_init_size_bytes;
-// }
-
-// int TcpServer::getWriteBufferMaxSize() const {
-// 	return _tcp_write_buffer_max_size_bytes;
-// }
-
-// string TcpServer::getLogFileNamePrefix() const {
-// 	return _log_file_name_prefix;
-// }
-
-// int TcpServer::getLogFileNameSize() const {
-// 	return _log_file_max_size_bytes;
-// }
-
-// int TcpServer::getLogFlushInterval() const {
-// 	return _log_flush_interval_second;
-// }
-
-// int TcpServer::getLogHighWaterMask() const {
-// 	return _log_high_watermask;
-// }
+bool TcpServer::exceedMaxMemory() const
+{
+	return _exceedMaxMemory;
+}

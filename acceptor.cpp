@@ -5,7 +5,6 @@ using namespace yeyj;
 Acceptor::Acceptor(const int & port) :
 	_port(port)
 {
-	/* create a listen socket on the given port */
 	_listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	assert(_listenfd >= 0);
 
@@ -19,9 +18,6 @@ Acceptor::Acceptor(const int & port) :
 
 	InetSockAddr serverAddr(AF_INET, INADDR_ANY, _port);
 
-	// assert(bind(_listenfd,
-	// 			(struct sockaddr *)&serverAddr,
-	// 			sizeof(serverAddr)) == 0);
 	if((bind(_listenfd,
 			 (struct sockaddr *)&serverAddr,
 			 sizeof(serverAddr))) != 0)
@@ -29,7 +25,6 @@ Acceptor::Acceptor(const int & port) :
 	assert(listen(_listenfd, SOMAXCONN) == 0);
 
 
-	/* create epoll fd */
 	_epollfd = epoll_create(1);
 	assert(_epollfd >= 0);
 
@@ -57,7 +52,7 @@ Acceptor::~Acceptor()
 
 void Acceptor::start(int timeout)
 {
-	cout << "acceptor start..." << endl;
+	std::cout << "acceptor start..." << std::endl;
 	/* should only be ran in the TcpServer main thread */
 	/* epoll wait and accept */
 	struct epoll_event events[1];
@@ -82,7 +77,7 @@ void Acceptor::start(int timeout)
 						|| errno == EINTR)
 						break;
 					else
-						cout << "Acceptor::start ret < 0" << endl;
+						std::cout << "Acceptor::start ret < 0" << std::endl;
 				}
 				assert(ret >= 0);
 				_connectionCallback(ret, InetSockAddr(clientAddr));

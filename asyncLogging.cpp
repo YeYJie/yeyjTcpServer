@@ -4,7 +4,7 @@
 
 using namespace yeyj;
 
-AsyncLogging::AsyncLogging(const string & logfilename,
+AsyncLogging::AsyncLogging(const std::string & logfilename,
 						   const int & flushInterval,
 						   const int & highWaterMask) :
 	_logfilename(logfilename),
@@ -32,7 +32,7 @@ void AsyncLogging::stop()
 	_thread.join();
 }
 
-void AsyncLogging::append(const string & logline)
+void AsyncLogging::append(const std::string & logline)
 {
 	if(!_running) return;
 
@@ -40,12 +40,12 @@ void AsyncLogging::append(const string & logline)
 	_currentBuffer.push_back(logline);
 	_accumulateBytes += logline.size();
 
-	// cout << "AsyncLogging::append " << logline << endl;
+	// std::std::cout << "AsyncLogging::appstd::endl " << logline << std::endl;
 
 	if(_currentBuffer.size() >= _highWaterMask
 		|| _accumulateBytes > _maxSizeBytes)
 	{
-		// printf("AsyncLogging::append %d\n", _currentBuffer.size());
+		// printf("AsyncLogging::appstd::endl %d\n", _currentBuffer.size());
 		_cond.notify();
 	}
 }
@@ -86,7 +86,7 @@ class LogFile
 {
 public:
 
-	LogFile(const string & name) {
+	LogFile(const std::string & name) {
 		_file = fopen(name.data(), "a");
 	}
 
@@ -95,17 +95,17 @@ public:
 			fclose(_file);
 	}
 
-	LogFile & operator=(const string & name) {
+	LogFile & operator=(const std::string & name) {
 		if(_file)
 			fclose(_file);
 		_file = fopen(name.data(), "a");
 	}
 
-	void write(const string & line) {
+	void write(const std::string & line) {
 		fwrite(line.c_str(), line.size(), 1, _file);
 	}
 
-	void writeLine(const string & data) {
+	void writeLine(const std::string & data) {
 		if(data.back() != '\n')
 			write(data + "\n");
 		else
@@ -121,7 +121,7 @@ private:
 };
 
 /*
- *		LogFile end
+ *		LogFile std::endl
  * */
 
 
@@ -146,7 +146,7 @@ void AsyncLogging::threadFunction()
 		}
 		if(_nextBuffer.empty()) continue;
 
-		// cout << "AsyncLogging::threadFunction " << _nextBuffer.size() << endl;
+		// std::std::cout << "AsyncLogging::threadFunction " << _nextBuffer.size() << std::endl;
 		for(int i = 0; i < _nextBuffer.size(); ++i)
 			logfile.writeLine(_nextBuffer[i]);
 		logfile.flush();
@@ -181,7 +181,7 @@ void AsyncLogging::threadFunction()
 		}
 	}
 	if(!_currentBuffer.empty()) {
-		for(const string & s : _currentBuffer)
+		for(const std::string & s : _currentBuffer)
 			logfile.writeLine(s);
 		logfile.flush();
 	}

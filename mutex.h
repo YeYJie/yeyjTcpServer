@@ -10,13 +10,22 @@ class MutexLock
 {
 public:
 
-	MutexLock();
+	MutexLock() : _holder(0) {
+		pthread_mutex_init(&_mutex, NULL);
+	}
 
-	~MutexLock();
+	~MutexLock() {
+		_holder = 0;
+		pthread_mutex_destroy(&_mutex);
+	}
 
-	void lock();
+	void lock() {
+		pthread_mutex_lock(&_mutex);
+	}
 
-	void unlock();
+	void unlock() {
+		pthread_mutex_unlock(&_mutex);
+	}
 
 	// used only by Condition !
 	pthread_mutex_t * getMutex() {

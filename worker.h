@@ -2,11 +2,9 @@
 #define _WORKER_H_
 
 #include "include.h"
-// #include "InetSockAddr.h"
 #include "thread.h"
 #include "tcpConnection.h"
 #include "mutex.h"
-// #include "TcpServer.h"
 #include "hash.h"
 
 namespace yeyj
@@ -14,37 +12,36 @@ namespace yeyj
 
 class TcpServer;
 class TcpConnection;
-typedef shared_ptr<TcpConnection> TcpConnectionPtr;
+
+typedef std::shared_ptr<TcpConnection> 				TcpConnectionPtr;
+typedef yeyj::HashTable<uint64_t, TcpConnectionPtr> ConnectionPool_t;
 
 class Worker : public Thread
 {
 public:
 
-	// explicit Worker(const int & maxConnection);
 	explicit Worker(TcpServer * master);
 
-	void setMaxConnection(const int n) {
-		_maxConnection = n;
-	}
+	~Worker();
+
+	Worker(const Worker &) = delete;
+
+	Worker & operator=(const Worker &) = delete;
+
+	void setMaxConnection(const int n);
 
 	void start();
 
 	void stop();
 
-	/*
-	 * 	This function would be called by the TcpServer thread
-	 * */
+
 	void registerNewConnection(const TcpConnectionPtr & conn);
 
-	int getConnectionNum() const { return _connectionPool.size(); }
+	int getConnectionNum() const;
+
 
 private:
 
-	/*
-	 * 	use epoll_wait
-	 *	when the conn socket becomes readable, calls the responding
-	 *	TcpConnection's handle read callback function
-	 * */
 	void workFunction();
 
 	void registerNewConnection();
@@ -62,15 +59,12 @@ private:
 	int 							_epollfd;
 	int 							_maxConnection;
 
-	MutexLock 						_mutex;
+	yeyj::MutexLock 				_mutex;
 	std::queue<TcpConnectionPtr> 	_incomingConnection;
 
-	// std::unordered_map<int, TcpConnectionPtr> 	_connectionPool;
-	// std::vector<TcpConnectionPtr>	_connectionPool;
-	// std::unordered_map<uint64_t, TcpConnectionPtr> 	_connectionPool;
-	yeyj::HashTable<uint64_t, TcpConnectionPtr> 	_connectionPool;
+	ConnectionPool_t				_connectionPool;
 
-	TcpServer * 					_master;
+	yeyj::TcpServer * 				_master = nullptr;
 };
 
 }

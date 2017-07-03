@@ -35,16 +35,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-using namespace std;
-
 int getTimeInSecond();
 int getTimeInMilliSecond();
 int getTimeInMicroSecond();
 
-string & ltrim(string &s);
-string & rtrim(string &s);
-string & trim(string &s);
-vector<string> split(const string & s, const string & delimiters);
+std::string & ltrim(std::string &s);
+std::string & rtrim(std::string &s);
+std::string & trim(std::string &s);
+std::vector<std::string> split(const std::string & s,
+								const std::string & delimiters);
 
 std::string format(const char *fmt, ...);
 std::string getDateAsString();

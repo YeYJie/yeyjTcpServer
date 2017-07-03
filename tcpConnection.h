@@ -13,7 +13,7 @@ namespace yeyj
 class TcpServer;
 class Worker;
 
-class TcpConnection : public enable_shared_from_this<TcpConnection>
+class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 {
 public:
 
@@ -73,11 +73,7 @@ public:
 			_epollEvent.events &= ~EPOLLOUT;
 	}
 
-	void log(const char * level, const string & msg);
-	// {
-	// 	_master->log(level, _worker->getTid(), _worker->getName(),
-	// 				_peerAddr.getIP(), _peerAddr.getPort(), msg);
-	// }
+	void log(const char * level, const std::string & msg);
 
 private:
 
@@ -99,7 +95,7 @@ private:
 	bool 						_close;
 };
 
-typedef shared_ptr<TcpConnection> TcpConnectionPtr;
+typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 
 }
 

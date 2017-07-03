@@ -21,25 +21,25 @@ int getTimeInMilliSecond()
 
 // string trim
 
-string & ltrim(string &s)
+std::string & ltrim(std::string & s)
 {
 	if (s.empty()) return s;
-	string::const_iterator iter = s.begin();
+	std::string::const_iterator iter = s.begin();
 	while (iter != s.end() && isspace(*iter++));
 	s.erase(s.begin(), --iter);
 	return s;
 }
 
-string & rtrim(string &s)
+std::string & rtrim(std::string &s)
 {
 	if (s.empty()) return s;
-	string::const_iterator iter = s.end();
+	std::string::const_iterator iter = s.end();
 	while (iter != s.begin() && isspace(*--iter));
 	s.erase(++iter, s.end());
 	return s;
 }
 
-string & trim(string &s)
+std::string & trim(std::string &s)
 {
 	ltrim(s);
 	rtrim(s);
@@ -49,9 +49,9 @@ string & trim(string &s)
 
 // string split
 
-vector<string> split(const string & s, const string & d)
+std::vector<std::string> split(const std::string & s, const std::string & d)
 {
-	vector<string> v;
+	std::vector<std::string> v;
 	char * str = new char[s.size()+1];
 	strcpy(str, s.c_str());
 	while (char *t = strsep(&str, d.c_str()))
@@ -82,9 +82,9 @@ std::string getDateAsString()
 {
 	time_t t = time(0);
 	struct tm * now = localtime(&t);
-	string res = format("%4d/%02d/%02d", now->tm_year + 1900,
+	std::string res = format("%4d/%02d/%02d", now->tm_year + 1900,
 				now->tm_mon + 1, now->tm_mday);
-	// cout << res << endl;
+	// std::cout << res << std::endl;
 	return res;
 }
 

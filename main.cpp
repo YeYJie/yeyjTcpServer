@@ -1,47 +1,26 @@
+#include <iostream>
 #include "tcpServer.h"
-using namespace yeyj;
-using namespace std;
 
-// int totalConnection = 0;
-
-void onConnection(const TcpConnectionPtr & conn)
+void onConnection(const yeyj::TcpConnectionPtr & conn)
 {
-	// totalConnection++;
-	cout << "new connection : " << conn->getId() << endl;
-	// conn->log(LOG_DEBUG, "yeyongjie");
+	std::cout << "new connection : " << conn->getId() << std::endl;
 }
 
-void onMessage(const TcpConnectionPtr & conn)
+void onMessage(const yeyj::TcpConnectionPtr & conn)
 {
-	// conn->sendRaw(conn->receiveRawAsString());
-	string temp = conn->receiveRawAsString();
-	conn->log(LOG_DEBUG, temp);
-	conn->sendRaw(temp);
-
-	// string message = conn->receiveRawAsString();
-	// // conn->send(message);
-	// cout << message << endl;
-	// string reply = "HTTP/1.1 200 OK\r\n"
-	// 			"Connection: close\r\n"
-	// 			"Server: Apache/2.2.3 (CentOS)\r\n"
-	// 			"Content-Length: 15\r\n"
-	// 			"Content-Type: text/html\r\n"
-	// 			"\r\n"
-	// 			"<html></html>\r\n";
-	// // cout << reply << endl;
-	// cout << reply.size() << endl;
-	// conn->sendRaw(reply);
+	std::string data = conn->receiveRawAsString();
+	conn->log(LOG_DEBUG, data);
+	conn->sendRaw(data);
 }
 
-void onDisconnection(const TcpConnectionPtr & conn)
+void onDisconnection(const yeyj::TcpConnectionPtr & conn)
 {
-	// totalConnection--;
-	cout << "disconnection : " << conn->getId() << endl;
+	std::cout << "disconnection : " << conn->getId() << std::endl;
 }
 
 int main()
 {
-	TcpServer server(44350);
+	yeyj::TcpServer server(44350);
 	server.setConnectionCallback(onConnection);
 	server.setMessageCallback(onMessage);
 	server.setDisconnectionCallback(onDisconnection);

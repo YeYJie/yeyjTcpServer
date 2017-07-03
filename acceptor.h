@@ -7,18 +7,6 @@
 namespace yeyj
 {
 
-/*
- *	Work flows :
- *
- *	creates a listen socket on the given port
- *
- *	uses epoll to wait for connection
- *
- *	accepts the incoming connection
- *
- *	calls the callback function from TcpServer
- *
- * */
 class Acceptor
 {
 public:

@@ -38,7 +38,7 @@ TcpConnection::TcpConnection(uint64_t id,
 	// printf("TcpConnection::constructor\n");
 }
 
-void TcpConnection::log(const char * level, const string & msg)
+void TcpConnection::log(const char * level, const std::string & msg)
 {
 	_master->log(level, _worker->getTid(), _worker->getName(),
 				_peerAddr.getIP(), _peerAddr.getPort(), msg);
@@ -52,7 +52,7 @@ TcpConnection::~TcpConnection()
 void TcpConnection::sendRaw(const std::string & str)
 {
 	if(_writeBuffer.getMaxSpace() < str.size()) {
-		cout << "TcpConnection::send : str is too long";
+		std::cout << "TcpConnection::sstd::endl : str is too long";
 	}
 	_writeBuffer.write(str);
 }
@@ -65,16 +65,16 @@ void TcpConnection::sendRaw(const char * str)
 void TcpConnection::sendRaw(const char * str, int size)
 {
 	if(_writeBuffer.getMaxSpace() < size) {
-		cout << "TcpConnection::sendRaw : str is too long";
+		std::cout << "TcpConnection::sstd::endlRaw : str is too long";
 	}
 	_writeBuffer.write(str, size);
 }
 
 void TcpConnection::sendMessage(const std::string & str)
 {
-	string buf = format("%d %s", str.size(), str.data());
+	std::string buf = format("%d %s", str.size(), str.data());
 	if(_writeBuffer.getMaxSpace() < buf.size()) {
-		cout << "TcpConnection::sendMessage : str is too long";
+		std::cout << "TcpConnection::sstd::endlMessage : str is too long";
 	}
 	_writeBuffer.write(buf);
 }
@@ -86,9 +86,9 @@ void TcpConnection::sendMessage(const char * str)
 
 void TcpConnection::sendMessage(const char * str, int size)
 {
-	string buf = format("%d %s", size, str);
+	std::string buf = format("%d %s", size, str);
 	if(_writeBuffer.getMaxSpace() < buf.size()) {
-		cout << "TcpConnection::sendMessage : str is too long";
+		std::cout << "TcpConnection::sstd::endlMessage : str is too long";
 	}
 	_writeBuffer.write(buf);
 }
@@ -119,8 +119,8 @@ std::string TcpConnection::receiveMessageAsString()
 	int temp, tempLen;
 	int ret = _readBuffer.peekIntWithLength(&temp, &tempLen);
 	if(ret) {
-		// cout << "TcpConnection::receiveMessageAsString ["
-		// 	<< temp << "]" << endl;
+		// std::cout << "TcpConnection::receiveMessageAsString ["
+		// 	<< temp << "]" << std::endl;
 		if(_readBuffer.size() >= tempLen + 1 + temp)
 		{
 			_readBuffer.skipHead(tempLen + 1);
@@ -128,8 +128,8 @@ std::string TcpConnection::receiveMessageAsString()
 		}
 		else
 		{
-			cout << "TcpConnection::receiveMessageAsString :"
-				<< "incomplete message" << endl;
+			std::cout << "TcpConnection::receiveMessageAsString :"
+				<< "incomplete message" << std::endl;
 		}
 	}
 	return res;
@@ -147,27 +147,15 @@ int TcpConnection::receiveMessage(char * dst)
 		}
 		else
 		{
-			cout << "TcpConnection::receiveMessageAsString :"
-				<< "incomplete message" << endl;
+			std::cout << "TcpConnection::receiveMessageAsString :"
+				<< "incomplete message" << std::endl;
 		}
 	}
 	return 0;
 }
 
-// int TcpConnection::getfd()
-// {
-// 	return _connfd;
-// }
-
-// epoll_event * TcpConnection::getEpollEvent()
-// {
-// 	return &_epollEvent;
-// }
-
 void TcpConnection::onConnection()
 {
-	// cout << "new tcp connection" << endl;
-	// _connectionCallback(*this);
 	_master->connectionCallback(shared_from_this());
 }
 
@@ -177,13 +165,11 @@ void TcpConnection::onReadableEvent()
 
 	int space = _readBuffer.getMaxSpace();
 	if(space <= 0) {
-		cout << "\n\nTcpConnection::onReadableEvent read buffer"
-				" can not expand any more\n" << endl;
+		std::cout << "\n\nTcpConnection::onReadableEvent read buffer"
+				" can not expand any more\n" << std::endl;
 		exit(0);
 	}
 	char * buffer = new char[space]{0};
-	// int len = -1;
-	// len = read(_connfd, buffer, space);
 
 	int ret = 0;
 	int totalRead = 0;
@@ -194,15 +180,12 @@ void TcpConnection::onReadableEvent()
 
 	if(ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK
 		&& errno != ECONNABORTED && errno != EPROTO && errno != EINTR)
-		cout << "\n\nTcpConnection::onReadableEvent : fatal error" << endl;
-	// cout << "ondata [" << len << "]" << endl;
+		std::cout << "\n\nTcpConnection::onReadableEvent : fatal error" << std::endl;
 
 	if(totalRead <= 0)
 		onDisconnection();
 	else {
 		_readBuffer.write(buffer, totalRead);
-
-		// _readBuffer.read();
 		onMessage();
 	}
 	delete[] buffer;
@@ -214,16 +197,14 @@ void TcpConnection::onWritableEvent()
 
 	int size = _writeBuffer.getSize();
 	if(size <= 0) {
-		// cout << "TcpConnection::onWritableEvent nothing to write" << endl;
+		// std::cout << "TcpConnection::onWritableEvent nothing to write" << std::endl;
 		return;
 	}
 
-	// cout << "TcpConnection::onWritableEvent() [" << size << "]" << endl;
+	// std::cout << "TcpConnection::onWritableEvent() [" << size << "]" << std::endl;
 
 	char * buffer = new char[size]{0};
-	// int len = -1;
 	_writeBuffer.copy(buffer, size);
-	// len = write(_connfd, buffer, size);
 
 	int ret = 0;
 	int totalWrite = 0;
@@ -233,10 +214,10 @@ void TcpConnection::onWritableEvent()
 	}
 	if(ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK
 		&& errno != ECONNABORTED && errno != EPROTO && errno != EINTR)
-		cout << "\n\nTcpConnection::onWritableEvent : fatal error" << endl;
+		std::cout << "\n\nTcpConnection::onWritableEvent : fatal error" << std::endl;
 
 	if(totalWrite <= 0) {
-		cout << "TcpConnection::onWritableEvent len <= 0" << endl;
+		std::cout << "TcpConnection::onWritableEvent len <= 0" << std::endl;
 	}
 	else {
 		// printf("TcpConnection::onWritableEvent [%d]\n", len);
@@ -247,11 +228,10 @@ void TcpConnection::onWritableEvent()
 
 void TcpConnection::onDisconnection()
 {
-	// cout << "tcp connection close" << endl;
+	// std::cout << "tcp connection close" << std::endl;
 	// _disconnectionCallback(*this);
 	_master->disconnectionCallback(shared_from_this());
 	_close = true;
-	// assert(close(_connfd) == 0);
 }
 
 void TcpConnection::onMessage()

@@ -4,22 +4,29 @@ using namespace yeyj;
 Worker::Worker(TcpServer * master) :
 	_master(master),
 	Thread(std::bind(&Worker::workFunction, this), "worker"),
-	// _maxConnection(maxConnection),
 	_mutex()
-	// _connectionPool
 {
 	_epollfd = epoll_create(1);
-	// _connectionPool.max_load_factor(5);
+}
+
+Worker::~Worker()
+{
+	_connectionPool.clear();
+	_master = nullptr;
+}
+
+void Worker::setMaxConnection(const int n)
+{
+	_maxConnection = n;
+}
+
+int Worker::getConnectionNum() const
+{
+	return _connectionPool.size();
 }
 
 void Worker::registerNewConnection(const TcpConnectionPtr & conn)
 {
-	/*
-	 *	we should put the new connection into a blocking queue instead of
-	 *	manipulating the epoll fd, because while the worker is blocking on
-	 *	epoll_wait, the behaviour would be undefined if the master thread
-	 *	registers fd on that epoll instance
-	 * */
 	MutexLockGuard lock(_mutex);
 	_incomingConnection.push(conn);
 }
@@ -31,7 +38,7 @@ void Worker::start()
 
 void Worker::stop()
 {
-	// Thread::stop();
+	Thread::join();
 }
 
 void Worker::workFunction()
@@ -43,13 +50,8 @@ void Worker::workFunction()
 							  _maxConnection,
 							  0);
 		// printf("Worker::workFunction [%d]\n", nfds);
-		// if(nfds < 0)
-		// 	cout << std::strerror(errno) << endl;
 
 		for(int i = 0; i < nfds; ++i) {
-
-			// TcpConnection * raw = (TcpConnection *)events[i].data.ptr;
-			// TcpConnectionPtr conn = raw->shared_from_this();
 
 			uint64_t connId = static_cast<uint64_t>(events[i].data.u64);
 			TcpConnectionPtr conn = _connectionPool[connId];
@@ -59,8 +61,8 @@ void Worker::workFunction()
 			{
 				epoll_ctl(_epollfd, EPOLL_CTL_DEL,
 							conn->getfd(), conn->getEpollEvent());
-				cout << "Worker::workFunction EPOLLERR or EPOLLHUP on "
-					<< conn->getfd() << endl;
+				std::cout << "Worker::workFunction EPOLLERR or EPOLLHUP on "
+					<< conn->getfd() << std::endl;
 				removeConnection(conn);
 			}
 
@@ -69,18 +71,11 @@ void Worker::workFunction()
 			if(events[i].events & EPOLLOUT)
 				conn->onWritableEvent();
 
-			// if(!conn->close()) {
-			// 	conn->updateEpollEvent();
-			// 	epoll_ctl(_epollfd, EPOLL_CTL_MOD,
-			// 				conn->getfd(), conn->getEpollEvent());
-			// }
 			if(conn->close()) {
 				removeConnection(conn);
 			}
 		}
-		/* if there are incoming connections on the blocking queue,
-		 * registers them on the epoll instance
-		 * */
+
 		registerNewConnection();
 
 		manageInactiveConnection();
@@ -94,27 +89,16 @@ void Worker::workFunction()
 void Worker::removeConnection(const TcpConnectionPtr & conn)
 {
 	epoll_ctl(_epollfd, EPOLL_CTL_DEL, conn->getfd(), conn->getEpollEvent());
-	// _connectionPool.erase(remove(_connectionPool.begin(), _connectionPool.end(), conn));
 	_connectionPool.erase(conn->getId());
 }
 
-/*	new connection from master thread would be stored temporaily
- *	on _incomingConnection, in this function, we register them on the
- *	worker's epoll instance
- * */
+
 void Worker::registerNewConnection()
 {
-	// printf("Worker::registerNewConnection\n");
-
-	// printf("Worker::registerNewConnection [size:%d]\n",
-	// 		_incomingConnection.size());
-
 	std::queue<TcpConnectionPtr> temp;
 	{
 		MutexLockGuard lock(_mutex);
 		_incomingConnection.swap(temp);
-		// if(!temp.empty() && _incomingConnection.empty())
-		// 	printf("Worker::registerNewConnection not empty\n");
 	}
 
 	while(!temp.empty()) {
@@ -129,20 +113,19 @@ void Worker::registerNewConnection()
 
 void Worker::eviction()
 {
-	// cout << "\n\nToo much connection, calling Worker::eviction..." << endl;
 	int rule = _master->getMaxTcpEvictionRule();
 
 	if(rule == MAX_TCP_EVICTION_NONE)
 		return;
 	else if(rule == MAX_TCP_EVICTION_RANDOM)
 		removeConnection(_connectionPool.getRandomValue());
-		// removeConnection(getRandomConnection());
 	else if(rule == MAX_TCP_EVICTION_INACTIVE) {
-		int numEviction = min(_connectionPool.size(), _master->getEvictionPoolSize());
+		int numEviction = std::min(_connectionPool.size(),
+									_master->getEvictionPoolSize());
 		evictRandomN(numEviction, true);
 	}
 	else
-		cout << "\n\ntcp server error eviction rule value\n" << endl;
+		std::cout << "\n\ntcp server error eviction rule value\n" << std::endl;
 }
 
 void Worker::manageInactiveConnection()
@@ -150,7 +133,7 @@ void Worker::manageInactiveConnection()
 	int rule = _master->getInactiveTcpEvictionRule();
 
 	if(rule == INACTIVE_TCP_EVICTION_NONE) {
-		// cout << "Worker::manageInactiveConnection do nothing" << endl;
+		// std::cout << "Worker::manageInactiveConnection do nothing" << std::endl;
 		return;
 	}
 
@@ -180,7 +163,8 @@ void Worker::evictRandomN(int n, bool force)
 	if(mostInactiveId != 0xFFFFFFFFFFFFFFFF
 		&& (force || mostInactiveTime > _master->getInactiveTcpTimeOut()))
 	{
-		printf("Worker::evictRandomN [%lld]\n", mostInactiveId);
+		// printf("Worker::evictRandomN [%lld]\n", mostInactiveId);
+		std::cout << "Worker::evictRandomN [" << mostInactiveId << "]" << std::endl;
 		removeConnection(_connectionPool[mostInactiveId]);
 	}
 }

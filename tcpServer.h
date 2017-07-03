@@ -5,7 +5,6 @@
 #include "acceptor.h"
 #include "asyncLogging.h"
 #include "worker.h"
-// #include "TcpConnection.h"
 
 namespace yeyj
 {
@@ -21,13 +20,19 @@ namespace yeyj
 #define LOAD_BALANCE_RANDOM 			1
 #define LOAD_BALANCE_MINCONNECTION 		2
 
+
 class Worker;
 class TcpConnection;
-typedef shared_ptr<TcpConnection> TcpConnectionPtr;
 
-typedef std::function<void (const TcpConnectionPtr & conn)> 	ConnectionCallback;
-typedef std::function<void (const TcpConnectionPtr & conn)> 	DisconnectionCallback;
-typedef std::function<void (const TcpConnectionPtr & conn)> 	MessageCallback;
+typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
+
+typedef std::function<void (const TcpConnectionPtr & conn)> ConnectionCallback;
+typedef std::function<void (const TcpConnectionPtr & conn)> DisconnectionCallback;
+typedef std::function<void (const TcpConnectionPtr & conn)> MessageCallback;
+
+typedef std::function<Worker*(uint32_t)> LoadBalanceFunc;
+
+
 
 class TcpServer
 {
@@ -37,50 +42,32 @@ public:
 
 	~TcpServer();
 
-	typedef std::function<Worker*(uint32_t)> LoadBalanceFunc;
+	TcpServer(const TcpServer &) = delete;
+	TcpServer & operator=(const TcpServer &) = delete;
 
-	/*
-	 *	runs the tcpserver with 'n' worker threads
-	 * */
 	void start(const int & n);
 
 	void stop();
 
-	// const ConnectionCallback & connectionCallback() const {
-	// 	return _connectionCallback;
-	// }
+
 	void setConnectionCallback(const ConnectionCallback & cb);
 
-	// const DisconnectionCallback & disconnectionCallback() const {
-	// 	return _disconnectionCallback;
-	// }
 	void setDisconnectionCallback(const DisconnectionCallback & cb);
 
-	// const MessageCallback & messageCallback() const {
-	// 	return _messageCallback;
-	// }
 	void setMessageCallback(const MessageCallback & cb);
+
 
 	ConnectionCallback 			connectionCallback;
 	DisconnectionCallback 		disconnectionCallback;
 	MessageCallback 			messageCallback;
 
-	void log(const char * level, pthread_t threadID, const string & threadName,
-				uint32_t ip, uint16_t port, const string & msg)
-	{
-		_logger.append(format("%s %u %s %s %d.%d.%d.%d:%d %s",
-						level, threadID, threadName.data(),
-						_timeString.data(),
-						(ip & 0x000000FF),
-						(ip & 0x0000FF00) >> 8,
-						(ip & 0x00FF0000) >> 16,
-						(ip & 0xFF000000) >> 24,
-						port, msg.data()));
-	}
 
-	bool exceedMaxMemory() const {
-		return _exceedMaxMemory;
-	}
+	void log(const char * level, pthread_t threadID,
+				const std::string & threadName,
+				uint32_t ip, uint16_t port,
+				const std::string & msg);
+
+	bool exceedMaxMemory() const;
 
 private:
 
@@ -96,15 +83,13 @@ private:
 
 	void checkMaxMemory();
 
-	// Worker * findAWorker();
-
 	void loadConfig(const char * configFileName);
 
 private:
 
 	bool 						_exceedMaxMemory = false;
 
-	string 						_timeString;
+	std::string 				_timeString;
 
 	AsyncLogging 				_logger;
 
@@ -138,7 +123,7 @@ private:
 	int 						_tcp_write_buffer_init_size_bytes;
 	int 						_tcp_write_buffer_max_size_bytes;
 
-	string 						_log_file_name_prefix;
+	std::string 						_log_file_name_prefix;
 	int 						_log_flush_interval_second;
 	int 						_log_high_watermask;
 	int 						_log_file_rolling;
@@ -147,21 +132,11 @@ private:
 
 public: // getter
 
-	int getListenningPort() const;
-	int getMaxTcpConnection() const;
 	int getMaxTcpConnectionPerWorker() const;
 	int getMaxTcpEvictionRule() const;
 	int getInactiveTcpTimeOut() const;
 	int getInactiveTcpEvictionRule() const;
 	int getEvictionPoolSize() const;
-	int getReadBufferInitSize() const;
-	int getReadBufferMaxSize() const;
-	int getWriteBufferInitSize() const;
-	int getWriteBufferMaxSize() const;
-	string getLogFileNamePrefix() const;
-	int getLogFileNameSize() const;
-	int getLogFlushInterval() const;
-	int getLogHighWaterMask() const;
 
 private: // load balance functions
 

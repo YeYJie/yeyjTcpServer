@@ -3,38 +3,56 @@
 
 #include "include.h"
 
-using std::string;
-
 namespace yeyj
 {
 
+typedef std::function<void ()> ThreadFunc;
 
 class Thread
 {
 public:
-	typedef std::function<void ()> ThreadFunc;
 
-	explicit Thread(const ThreadFunc & theadfunc,
-						const string & name = string());
+	explicit Thread(const ThreadFunc & threadfunc,
+						const std::string & name = "")
+		:	_name(name),
+			_tid(0),
+			_threadfunc(threadfunc) { }
 
-	~Thread();
+	~Thread() {
+		pthread_detach(_tid);
+	}
 
-	void start();
-	void join();
+	Thread(const Thread &) = delete;
+	Thread & operator=(const Thread &) = delete;
+
+	void start() {
+		pthread_create(&_tid, NULL, &startThread, this);
+	}
+
+	void join() {
+		pthread_join(_tid, NULL);
+	}
 
 	pthread_t getTid() {
 		return _tid;
 	}
 
-	string getName() {
+	std::string getName() {
 		return _name;
 	}
 
 private:
-	static void * startThread(void * obj);
+
+	// used by pthread_create
+	static void * startThread(void * obj)
+	{
+		Thread * thread = static_cast<Thread *>(obj);
+		thread->_threadfunc();
+		return NULL;
+	}
 
 private:
-	string 		_name;
+	std::string 		_name;
 	pthread_t 	_tid = 0;
 	ThreadFunc	_threadfunc;
 

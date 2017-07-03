@@ -206,7 +206,7 @@ public:
 					_begin, _end, _count);
 		for(int i = 0; i < _currentSize; ++i)
 			printf("%c", _data[i]);
-		cout << "]" << endl;
+		std::cout << "]" << std::endl;
 	}
 
 	void grow(int capacity) {
@@ -223,7 +223,7 @@ public:
 		_begin = 0;
 		_end = _count;
 		_currentSize = newSize;
-		swap(temp, _data);
+		std::swap(temp, _data);
 		delete[] temp;
 	}
 
