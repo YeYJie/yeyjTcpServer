@@ -33,7 +33,7 @@ int main()
 {
 	yeyj::TcpServer server(44350);	// port
 	
-	server.setConnectionCallback(onConnection);			// not necessary
+	server.setConnectionCallback(onConnection);		// not necessary
 	server.setMessageCallback(onMessage);
 	server.setDisconnectionCallback(onDisconnection);	// not necessary
 	
@@ -49,7 +49,7 @@ int main()
 
 #### Config File :
 
-~~~ python
+~~~
 # some comments
 # ...
 
